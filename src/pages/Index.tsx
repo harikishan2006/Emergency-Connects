@@ -1,16 +1,30 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from "react";
+import hospitalBg from "@/assets/hospital-bg.jpg";
+import LandingView from "@/components/LandingView";
+import LoginView from "@/components/LoginView";
+import RegisterView from "@/components/RegisterView";
+import VerifyView from "@/components/VerifyView";
 
-// IMPORTANT: Fully REPLACE this with your own code
-const PlaceholderIndex = () => {
-  // PLACEHOLDER: Replace this entire return statement with the user's app.
-  // The inline background color is intentionally not part of the design system.
+type View = "landing" | "login" | "register" | "verify";
+
+const Index = () => {
+  const [view, setView] = useState<View>("landing");
+  const [email, setEmail] = useState("");
+
   return (
-    <div className="flex min-h-screen items-center justify-center" style={{ backgroundColor: '#fcfbf8' }}>
-      <img data-lovable-blank-page-placeholder="REMOVE_THIS" src="/placeholder.svg" alt="Your app will live here!" />
+    <div className="relative min-h-screen">
+      {/* Fixed background */}
+      <div className="fixed inset-0 -z-10">
+        <img src={hospitalBg} alt="" className="w-full h-full object-cover" width={1920} height={1080} />
+        <div className="absolute inset-0" style={{ background: "rgba(0, 20, 40, 0.82)" }} />
+      </div>
+
+      {view === "landing" && <LandingView onNavigate={setView} />}
+      {view === "login" && <LoginView onNavigate={setView} />}
+      {view === "register" && <RegisterView onNavigate={setView} onSetEmail={setEmail} />}
+      {view === "verify" && <VerifyView email={email} onNavigate={setView} />}
     </div>
   );
 };
-
-const Index = PlaceholderIndex;
 
 export default Index;
