@@ -202,7 +202,99 @@ const DashboardView = ({ onNavigate }: DashboardViewProps) => {
             </Table>
           </div>
         </div>
+
+        {/* Ambulance Dispatch Panel */}
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Active Ambulance Units */}
+          <div className="glass-card p-6 animate-fade-slide-up-delay-3">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+                <Ambulance className="h-4 w-4 text-primary" /> Ambulance Dispatch
+              </h3>
+              <Badge className="bg-primary/20 text-primary border-primary/30 text-xs gap-1">
+                {ambulanceUnits.filter(a => a.status === "Available").length} Units Ready
+              </Badge>
+            </div>
+            <div className="space-y-3">
+              {ambulanceUnits.map(unit => (
+                <div key={unit.id} className="flex items-center justify-between p-3 rounded-lg border border-border/30 hover:border-border/60 transition-colors"
+                  style={{ background: "hsla(210, 50%, 95%, 0.04)" }}>
+                  <div className="flex items-center gap-3">
+                    <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
+                      unit.status === "Available" ? "bg-accent/15" : unit.status === "En Route" ? "bg-yellow-500/15" : "bg-destructive/15"
+                    }`}>
+                      <Ambulance className={`h-4 w-4 ${
+                        unit.status === "Available" ? "text-accent" : unit.status === "En Route" ? "text-yellow-400" : "text-destructive"
+                      }`} />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium text-foreground">{unit.id} <span className="text-xs text-muted-foreground ml-1">({unit.type})</span></p>
+                      <p className="text-xs text-muted-foreground">{unit.crew} · {unit.location}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={unit.status === "Available" ? "outline" : unit.status === "En Route" ? "outline" : "destructive"}
+                      className={
+                        unit.status === "Available" ? "bg-accent/15 text-accent border-accent/30 text-xs" :
+                        unit.status === "En Route" ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 text-xs" :
+                        "text-xs"
+                      }>
+                      {unit.status}
+                    </Badge>
+                    {unit.status === "Available" && (
+                      <button className="btn-outline text-xs px-3 py-1.5 flex items-center gap-1">
+                        <Navigation className="h-3 w-3" /> Dispatch
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Route Estimations */}
+          <div className="glass-card p-6 animate-fade-slide-up-delay-3">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2 mb-4">
+              <Route className="h-4 w-4 text-accent" /> Route Estimations from Apollo
+            </h3>
+            <div className="overflow-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/50">
+                    <TableHead className="text-muted-foreground">Destination</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Distance</TableHead>
+                    <TableHead className="text-muted-foreground text-center">ETA</TableHead>
+                    <TableHead className="text-muted-foreground text-center">Traffic</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {routeEstimations.map(r => (
+                    <TableRow key={r.to} className="border-border/30 hover:bg-transparent">
+                      <TableCell className="font-medium text-foreground text-sm">{r.to}</TableCell>
+                      <TableCell className="text-center text-muted-foreground text-sm">{r.distance}</TableCell>
+                      <TableCell className="text-center">
+                        <span className="flex items-center justify-center gap-1 text-sm font-bold text-primary">
+                          <Clock className="h-3 w-3" /> {r.eta}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="outline" className={
+                          r.traffic === "Light" ? "bg-accent/15 text-accent border-accent/30 text-xs" :
+                          r.traffic === "Moderate" ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 text-xs" :
+                          "bg-destructive/15 text-destructive border-destructive/30 text-xs"
+                        }>
+                          {r.traffic}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          </div>
+        </div>
       </div>
+    </div>
     </div>
   );
 };
