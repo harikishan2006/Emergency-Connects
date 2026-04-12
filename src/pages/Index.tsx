@@ -4,8 +4,9 @@ import LandingView from "@/components/LandingView";
 import LoginView from "@/components/LoginView";
 import RegisterView from "@/components/RegisterView";
 import VerifyView from "@/components/VerifyView";
+import DashboardView from "@/components/DashboardView";
 
-type View = "landing" | "login" | "register" | "verify";
+type View = "landing" | "login" | "register" | "verify" | "dashboard";
 
 const Index = () => {
   const [view, setView] = useState<View>("landing");
@@ -23,6 +24,7 @@ const Index = () => {
       {view === "login" && <LoginView onNavigate={setView} />}
       {view === "register" && <RegisterView onNavigate={setView} onSetEmail={setEmail} />}
       {view === "verify" && <VerifyView email={email} onNavigate={setView} />}
+      {view === "dashboard" && <DashboardView onNavigate={setView} />}
     </div>
   );
 };
