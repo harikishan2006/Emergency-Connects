@@ -1,4 +1,4 @@
-import { Activity, Bed, Heart, LogOut, MapPin, Phone, Shield, Stethoscope, User, Users, Wifi } from "lucide-react";
+import { Activity, Ambulance, Bed, Clock, Heart, LogOut, MapPin, Navigation, Phone, Route, Shield, Stethoscope, User, Users, Wifi } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
