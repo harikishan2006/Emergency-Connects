@@ -19,6 +19,21 @@ const nearbyHospitals = [
   { name: "Fortis Malar", location: "Adyar", doctor: "Dr. Nandakumar Sundaram", specialty: "Traumatology & Spine", beds: 2, status: "Critical" },
 ];
 
+const ambulanceUnits = [
+  { id: "AMB-01", type: "ALS", status: "Available", location: "Apollo Base", crew: "Paramedic Team A" },
+  { id: "AMB-02", type: "BLS", status: "En Route", location: "Near Vadapalani", crew: "Paramedic Team B" },
+  { id: "AMB-03", type: "ALS", status: "On Scene", location: "T. Nagar Junction", crew: "Paramedic Team C" },
+  { id: "AMB-04", type: "MICU", status: "Available", location: "Apollo Base", crew: "Critical Care Unit" },
+];
+
+const routeEstimations = [
+  { from: "Apollo Greams Road", to: "MGM Healthcare", distance: "6.2 km", eta: "14 min", traffic: "Moderate" },
+  { from: "Apollo Greams Road", to: "SIMS Hospital", distance: "8.7 km", eta: "22 min", traffic: "Heavy" },
+  { from: "Apollo Greams Road", to: "MIOT International", distance: "12.4 km", eta: "28 min", traffic: "Light" },
+  { from: "Apollo Greams Road", to: "Kauvery Hospital", distance: "3.1 km", eta: "8 min", traffic: "Light" },
+  { from: "Apollo Greams Road", to: "Fortis Malar", distance: "9.5 km", eta: "20 min", traffic: "Moderate" },
+];
+
 const DashboardView = ({ onNavigate }: DashboardViewProps) => {
   const [beds, setBeds] = useState(12);
   const totalBeds = 50;
