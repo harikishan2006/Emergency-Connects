@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 
 interface VerifyViewProps {
   email: string;
-  onNavigate: (view: "landing") => void;
+  onNavigate: (view: "landing" | "dashboard") => void;
 }
 
 const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
@@ -39,7 +39,7 @@ const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Success!</h2>
           <p className="text-muted-foreground mb-8">Welcome to EmergencyConnect. Your hospital is now part of the network.</p>
-          <button onClick={() => onNavigate("landing")} className="btn-primary">
+          <button onClick={() => onNavigate("dashboard")} className="btn-primary">
             Go to Dashboard
           </button>
         </div>

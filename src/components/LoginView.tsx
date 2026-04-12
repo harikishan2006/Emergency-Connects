@@ -2,7 +2,7 @@ import { Activity, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 
 interface LoginViewProps {
-  onNavigate: (view: "landing" | "register") => void;
+  onNavigate: (view: "landing" | "register" | "dashboard") => void;
 }
 
 const LoginView = ({ onNavigate }: LoginViewProps) => {
@@ -11,8 +11,7 @@ const LoginView = ({ onNavigate }: LoginViewProps) => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Simulation only
-    alert("Login functionality coming soon!");
+    onNavigate("dashboard");
   };
 
   return (
