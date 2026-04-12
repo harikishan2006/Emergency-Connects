@@ -295,7 +295,6 @@ const DashboardView = ({ onNavigate }: DashboardViewProps) => {
         </div>
       </div>
     </div>
-    </div>
   );
 };
 
