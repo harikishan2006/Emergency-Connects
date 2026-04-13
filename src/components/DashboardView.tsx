@@ -6,6 +6,8 @@ import { Progress } from "@/components/ui/progress";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
+import CriticalAlerts from "@/components/CriticalAlerts";
+import LiveMapView from "@/components/LiveMapView";
 
 interface DashboardViewProps {
   onNavigate: (view: "landing") => void;
