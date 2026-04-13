@@ -1,14 +1,18 @@
-import { Activity, CheckCircle2, Mail } from "lucide-react";
+import { Activity, AlertCircle, CheckCircle2, Mail, RefreshCw } from "lucide-react";
 import { useRef, useState } from "react";
+import { toast } from "sonner";
 
 interface VerifyViewProps {
   email: string;
+  verificationCode: string;
   onNavigate: (view: "landing" | "dashboard") => void;
 }
 
-const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
+const VerifyView = ({ email, verificationCode, onNavigate }: VerifyViewProps) => {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [verified, setVerified] = useState(false);
+  const [error, setError] = useState("");
+  const [attempts, setAttempts] = useState(0);
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (idx: number, val: string) => {
@@ -16,6 +20,7 @@ const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
     const next = [...code];
     next[idx] = val.slice(-1);
     setCode(next);
+    setError("");
     if (val && idx < 5) inputsRef.current[idx + 1]?.focus();
   };
 
@@ -25,8 +30,45 @@ const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (pasted.length === 6) {
+      const digits = pasted.split("");
+      setCode(digits);
+      inputsRef.current[5]?.focus();
+    }
+  };
+
   const handleVerify = () => {
-    if (code.every(c => c)) setVerified(true);
+    const enteredCode = code.join("");
+    if (enteredCode.length < 6) {
+      setError("Please enter all 6 digits");
+      return;
+    }
+
+    if (enteredCode === verificationCode) {
+      setVerified(true);
+      toast.success("Email verified successfully!");
+    } else {
+      const newAttempts = attempts + 1;
+      setAttempts(newAttempts);
+      setError(`Invalid verification code. ${3 - newAttempts} attempts remaining.`);
+      setCode(["", "", "", "", "", ""]);
+      inputsRef.current[0]?.focus();
+
+      if (newAttempts >= 3) {
+        toast.error("Too many failed attempts. Please register again.");
+        onNavigate("landing");
+      }
+    }
+  };
+
+  const handleResend = () => {
+    toast.success(`New verification code sent to ${email}`, {
+      description: `Demo code: ${verificationCode}`,
+      duration: 15000,
+    });
   };
 
   if (verified) {
@@ -55,10 +97,13 @@ const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
           <Mail className="h-8 w-8 text-primary" />
         </div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Check Your Gmail</h2>
-        <p className="text-sm text-muted-foreground mb-8">
+        <p className="text-sm text-muted-foreground mb-2">
           Verification code sent to <span className="text-primary font-medium">{email || "your email"}</span>
         </p>
-        <div className="flex justify-center gap-3 mb-8">
+        <p className="text-xs text-muted-foreground/60 mb-8">
+          Enter the 6-digit code to verify your hospital email
+        </p>
+        <div className="flex justify-center gap-3 mb-4" onPaste={handlePaste}>
           {code.map((digit, i) => (
             <input
               key={i}
@@ -69,13 +114,24 @@ const VerifyView = ({ email, onNavigate }: VerifyViewProps) => {
               value={digit}
               onChange={e => handleChange(i, e.target.value)}
               onKeyDown={e => handleKeyDown(i, e)}
-              className="glass-input w-12 h-14 text-center text-xl font-bold"
+              className={`glass-input w-12 h-14 text-center text-xl font-bold ${error ? "!border-destructive/60" : ""}`}
             />
           ))}
         </div>
-        <button onClick={handleVerify} className="btn-primary"
+        {error && (
+          <p className="text-xs text-destructive mb-4 flex items-center justify-center gap-1">
+            <AlertCircle className="h-3 w-3" /> {error}
+          </p>
+        )}
+        <button onClick={handleVerify} className="btn-primary mb-4"
           style={{ opacity: code.every(c => c) ? 1 : 0.5 }}>
           Verify
+        </button>
+        <button
+          onClick={handleResend}
+          className="flex items-center justify-center gap-1.5 mx-auto text-xs text-muted-foreground hover:text-primary transition-colors"
+        >
+          <RefreshCw className="h-3 w-3" /> Resend Code
         </button>
       </div>
     </div>
