@@ -11,6 +11,7 @@ type View = "landing" | "login" | "register" | "verify" | "dashboard";
 const Index = () => {
   const [view, setView] = useState<View>("landing");
   const [email, setEmail] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
 
   return (
     <div className="relative min-h-screen">
@@ -22,8 +23,8 @@ const Index = () => {
 
       {view === "landing" && <LandingView onNavigate={setView} />}
       {view === "login" && <LoginView onNavigate={setView} />}
-      {view === "register" && <RegisterView onNavigate={setView} onSetEmail={setEmail} />}
-      {view === "verify" && <VerifyView email={email} onNavigate={setView} />}
+      {view === "register" && <RegisterView onNavigate={setView} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
+      {view === "verify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView} />}
       {view === "dashboard" && <DashboardView onNavigate={setView} />}
     </div>
   );
