@@ -292,9 +292,13 @@ const DashboardView = ({ onNavigate }: DashboardViewProps) => {
                   ))}
                 </TableBody>
               </Table>
-            </div>
-          </div>
-        </div>
+        {/* Critical Alerts */}
+        <CriticalAlerts />
+
+        {/* Live Map View */}
+        <LiveMapView />
+      </div>
+    </div>
       </div>
     </div>
   );
