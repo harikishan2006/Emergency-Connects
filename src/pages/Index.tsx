@@ -8,7 +8,7 @@ import PatientRegisterView from "@/components/PatientRegisterView";
 import VerifyView from "@/components/VerifyView";
 import DashboardView from "@/components/DashboardView";
 
-type View = "landing" | "login" | "chooseRegister" | "register" | "patientRegister" | "verify" | "patientVerify" | "dashboard";
+type View = "landing" | "login" | "chooseRegister" | "register" | "patientRegister" | "verify" | "patientVerify" | "loginVerify" | "dashboard";
 
 const Index = () => {
   const [view, setView] = useState<View>("landing");
@@ -23,12 +23,13 @@ const Index = () => {
       </div>
 
       {view === "landing" && <LandingView onNavigate={setView as any} />}
-      {view === "login" && <LoginView onNavigate={setView as any} />}
+      {view === "login" && <LoginView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
       {view === "chooseRegister" && <RegistrationChooser onNavigate={setView as any} />}
       {view === "register" && <RegisterView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
       {view === "patientRegister" && <PatientRegisterView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
       {view === "verify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} />}
       {view === "patientVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} />}
+      {view === "loginVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} />}
       {view === "dashboard" && <DashboardView onNavigate={setView as any} />}
     </div>
   );

@@ -1,18 +1,35 @@
 import { Activity, ArrowLeft, Building2, UserCircle } from "lucide-react";
 import { useState } from "react";
+import { toast } from "sonner";
 
 interface LoginViewProps {
-  onNavigate: (view: "landing" | "chooseRegister" | "dashboard") => void;
+  onNavigate: (view: "landing" | "chooseRegister" | "dashboard" | "loginVerify") => void;
+  onSetEmail: (email: string) => void;
+  onSetVerificationCode: (code: string) => void;
 }
 
-const LoginView = ({ onNavigate }: LoginViewProps) => {
+const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewProps) => {
   const [tab, setTab] = useState<"patient" | "hospital">("patient");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onNavigate("dashboard");
+    if (!email || !password) {
+      toast.error("Please enter both email and password");
+      return;
+    }
+
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    onSetVerificationCode(code);
+    onSetEmail(email);
+
+    toast.success(`Verification code sent to ${email}`, {
+      description: `Demo code: ${code}`,
+      duration: 15000,
+    });
+
+    onNavigate("loginVerify");
   };
 
   return (
