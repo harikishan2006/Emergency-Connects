@@ -1,7 +1,8 @@
 import { Activity, BarChart3, ShieldCheck, Users } from "lucide-react";
+import Footer from "@/components/Footer";
 
 interface LandingViewProps {
-  onNavigate: (view: "login" | "register") => void;
+  onNavigate: (view: "login" | "chooseRegister") => void;
 }
 
 const pillars = [
@@ -58,8 +59,8 @@ const LandingView = ({ onNavigate }: LandingViewProps) => {
             Saving lives through real-time data and hospital integration.
           </p>
           <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center animate-fade-slide-up-delay-2">
-            <button onClick={() => onNavigate("register")} className="btn-primary">
-              Register Your Hospital
+            <button onClick={() => onNavigate("chooseRegister")} className="btn-primary">
+              Get Started
             </button>
             <button onClick={() => onNavigate("login")} className="btn-outline">
               Sign In
@@ -90,10 +91,7 @@ const LandingView = ({ onNavigate }: LandingViewProps) => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="px-6 py-8 text-center text-sm text-muted-foreground border-t border-border">
-        © 2026 EmergencyConnect. All rights reserved.
-      </footer>
+      <Footer />
     </div>
   );
 };
