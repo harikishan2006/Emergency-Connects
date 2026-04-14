@@ -1,11 +1,12 @@
-import { Activity, ArrowLeft } from "lucide-react";
+import { Activity, ArrowLeft, Building2, UserCircle } from "lucide-react";
 import { useState } from "react";
 
 interface LoginViewProps {
-  onNavigate: (view: "landing" | "register" | "dashboard") => void;
+  onNavigate: (view: "landing" | "chooseRegister" | "dashboard") => void;
 }
 
 const LoginView = ({ onNavigate }: LoginViewProps) => {
+  const [tab, setTab] = useState<"patient" | "hospital">("patient");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -24,24 +25,52 @@ const LoginView = ({ onNavigate }: LoginViewProps) => {
           <Activity className="h-6 w-6 text-primary" />
           <span className="text-lg font-bold text-foreground">EmergencyConnect</span>
         </div>
+
+        {/* Login Tabs */}
+        <div className="flex rounded-lg overflow-hidden mb-8 border border-border">
+          <button
+            onClick={() => setTab("patient")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-all duration-300 ${
+              tab === "patient" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <UserCircle className="h-4 w-4" /> Patient
+          </button>
+          <button
+            onClick={() => setTab("hospital")}
+            className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-medium transition-all duration-300 ${
+              tab === "hospital" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Building2 className="h-4 w-4" /> Hospital
+          </button>
+        </div>
+
         <h2 className="text-2xl font-bold text-foreground mb-2">Welcome back</h2>
-        <p className="text-sm text-muted-foreground mb-8">Sign in to access the hospital portal</p>
+        <p className="text-sm text-muted-foreground mb-8">
+          Sign in to {tab === "patient" ? "your patient account" : "the hospital portal"}
+        </p>
         <form onSubmit={handleSubmit} className="space-y-5">
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Email</label>
-            <input type="email" className="glass-input" placeholder="hospital@example.com" value={email} onChange={e => setEmail(e.target.value)} required />
+            <input
+              type="email"
+              className="glass-input"
+              placeholder={tab === "patient" ? "rajesh@gmail.com" : "admin@apollohospitals.com"}
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Password</label>
             <input type="password" className="glass-input" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
-          <button type="submit" className="btn-primary mt-2">Login</button>
+          <button type="submit" className="btn-primary mt-2">Login as {tab === "patient" ? "Patient" : "Hospital"}</button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
-          <button onClick={() => onNavigate("register")} className="text-primary font-medium hover:underline">
-            Register here
-          </button>
+          <button onClick={() => onNavigate("chooseRegister")} className="text-primary font-medium hover:underline">Register here</button>
         </p>
       </div>
     </div>
