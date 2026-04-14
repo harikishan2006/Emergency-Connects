@@ -3,7 +3,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 interface RegisterViewProps {
-  onNavigate: (view: "landing" | "login" | "verify") => void;
+  onNavigate: (view: "landing" | "login" | "verify" | "chooseRegister") => void;
   onSetEmail: (email: string) => void;
   onSetVerificationCode: (code: string) => void;
 }
@@ -76,10 +76,14 @@ const validateForm = (form: Record<string, string>): FormErrors => {
   return errors;
 };
 
+const hospitalTypes = ["Government", "Private", "Trust/NGO", "Teaching Hospital", "Specialty Center"];
+const specialties = ["General Medicine", "Cardiology", "Neurology", "Orthopedics", "Oncology", "Pediatrics", "Trauma & Emergency", "Multi-Specialty"];
+
 const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: RegisterViewProps) => {
   const [form, setForm] = useState({
-    hospitalName: "", address: "", leadDoctor: "", dutyDoctor: "",
-    beds: "", staff: "", email: "", password: "",
+    hospitalName: "", address: "", hospitalType: "", licenseNumber: "",
+    leadDoctor: "", doctorSpecialty: "", doctorLicenseId: "", dutyDoctor: "",
+    beds: "", icuBeds: "", staff: "", email: "", password: "",
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
@@ -133,12 +137,15 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
     onNavigate("verify");
   };
 
-  const fields: { key: string; label: string; type?: string; placeholder: string; hint?: string }[] = [
+  const textFields: { key: string; label: string; type?: string; placeholder: string; hint?: string }[] = [
     { key: "hospitalName", label: "Hospital Name", placeholder: "Apollo Hospitals", hint: "Official registered hospital name" },
     { key: "address", label: "Full Physical Address", placeholder: "21, Greams Lane, Thousand Lights, Chennai", hint: "Complete address with city and pincode" },
+    { key: "licenseNumber", label: "Hospital License Number", placeholder: "TN/MED/2024/12345", hint: "State medical license ID" },
     { key: "leadDoctor", label: "Lead Doctor Name", placeholder: "Dr. Vijay Kishore", hint: "Format: Dr. [Full Name]" },
+    { key: "doctorLicenseId", label: "Doctor License / MCI ID", placeholder: "MCI-67890", hint: "Medical Council registration ID" },
     { key: "dutyDoctor", label: "Current Doctor on Duty", placeholder: "Dr. Meera Raghavan", hint: "Format: Dr. [Full Name]" },
     { key: "beds", label: "Available Emergency Beds", type: "number", placeholder: "24", hint: "Number between 1–999" },
+    { key: "icuBeds", label: "ICU Beds Available", type: "number", placeholder: "8", hint: "Number between 0–999" },
     { key: "staff", label: "Current Staff Count", type: "number", placeholder: "50", hint: "Number between 1–9999" },
     { key: "email", label: "Official Hospital Email", type: "email", placeholder: "admin@apollohospitals.com", hint: "Must be a valid hospital email" },
     { key: "password", label: "Password", type: "password", placeholder: "••••••••", hint: "Min 8 chars, 1 uppercase, 1 lowercase, 1 number" },
@@ -147,7 +154,7 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
   return (
     <div className="min-h-screen flex items-center justify-center px-6 py-20 animate-fade-in">
       <div className="glass-card p-8 md:p-10 w-full max-w-lg animate-fade-slide-up">
-        <button onClick={() => onNavigate("landing")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-300 mb-6">
+        <button onClick={() => onNavigate("chooseRegister")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-300 mb-6">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
         <div className="flex items-center gap-2 mb-6">
@@ -157,27 +164,71 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
         <h2 className="text-2xl font-bold text-foreground mb-2">Hospital Registration</h2>
         <p className="text-sm text-muted-foreground mb-8">Register your facility to join the network</p>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {fields.map(f => (
+          <h3 className="text-xs font-semibold text-primary uppercase tracking-wider pt-2">Facility Information</h3>
+          {textFields.slice(0, 2).map(f => (
             <div key={f.key}>
               <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{f.label}</label>
-              <input
-                type={f.type || "text"}
-                className={`glass-input ${errors[f.key] && touched[f.key] ? "!border-destructive/60" : ""}`}
-                placeholder={f.placeholder}
-                value={(form as any)[f.key]}
-                onChange={e => update(f.key, e.target.value)}
-                onBlur={() => handleBlur(f.key)}
-              />
+              <input type={f.type || "text"} className={`glass-input ${errors[f.key] && touched[f.key] ? "!border-destructive/60" : ""}`}
+                placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => update(f.key, e.target.value)} onBlur={() => handleBlur(f.key)} />
               {errors[f.key] && touched[f.key] ? (
-                <p className="text-[11px] text-destructive mt-1 flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3 flex-shrink-0" /> {errors[f.key]}
-                </p>
-              ) : (
-                f.hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{f.hint}</p>
-              )}
+                <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3 flex-shrink-0" /> {errors[f.key]}</p>
+              ) : f.hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{f.hint}</p>}
             </div>
           ))}
-          <button type="submit" className="btn-primary mt-2">Register</button>
+
+          {/* Hospital Type Select */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Hospital Type</label>
+            <select className="glass-input" value={form.hospitalType} onChange={e => update("hospitalType", e.target.value)}>
+              <option value="" className="bg-card text-foreground">Select hospital type</option>
+              {hospitalTypes.map(t => <option key={t} value={t} className="bg-card text-foreground">{t}</option>)}
+            </select>
+          </div>
+
+          {/* License Number */}
+          {textFields.slice(2, 3).map(f => (
+            <div key={f.key}>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{f.label}</label>
+              <input type="text" className={`glass-input ${errors[f.key] && touched[f.key] ? "!border-destructive/60" : ""}`}
+                placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => update(f.key, e.target.value)} onBlur={() => handleBlur(f.key)} />
+              {f.hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{f.hint}</p>}
+            </div>
+          ))}
+
+          <h3 className="text-xs font-semibold text-primary uppercase tracking-wider pt-4">Medical Staff</h3>
+          {textFields.slice(3, 4).map(f => (
+            <div key={f.key}>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{f.label}</label>
+              <input type="text" className={`glass-input ${errors[f.key] && touched[f.key] ? "!border-destructive/60" : ""}`}
+                placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => update(f.key, e.target.value)} onBlur={() => handleBlur(f.key)} />
+              {errors[f.key] && touched[f.key] ? (
+                <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3 flex-shrink-0" /> {errors[f.key]}</p>
+              ) : f.hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{f.hint}</p>}
+            </div>
+          ))}
+
+          {/* Doctor Specialty Select */}
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Doctor Specialty</label>
+            <select className="glass-input" value={form.doctorSpecialty} onChange={e => update("doctorSpecialty", e.target.value)}>
+              <option value="" className="bg-card text-foreground">Select specialty</option>
+              {specialties.map(s => <option key={s} value={s} className="bg-card text-foreground">{s}</option>)}
+            </select>
+          </div>
+
+          {/* Remaining text fields */}
+          {textFields.slice(4).map(f => (
+            <div key={f.key}>
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{f.label}</label>
+              <input type={f.type || "text"} className={`glass-input ${errors[f.key] && touched[f.key] ? "!border-destructive/60" : ""}`}
+                placeholder={f.placeholder} value={(form as any)[f.key]} onChange={e => update(f.key, e.target.value)} onBlur={() => handleBlur(f.key)} />
+              {errors[f.key] && touched[f.key] ? (
+                <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3 flex-shrink-0" /> {errors[f.key]}</p>
+              ) : f.hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{f.hint}</p>}
+            </div>
+          ))}
+
+          <button type="submit" className="btn-primary mt-2">Register Hospital</button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already registered?{" "}
