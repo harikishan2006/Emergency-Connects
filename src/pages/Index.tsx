@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import hospitalBg from "@/assets/hospital-bg.jpg";
 import LandingView from "@/components/LandingView";
 import LoginView from "@/components/LoginView";
@@ -15,6 +16,22 @@ const Index = () => {
   const [email, setEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
 
+  // Listen for auth state changes
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session) {
+        setView("dashboard");
+      }
+    });
+
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) setView("dashboard");
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
   return (
     <div className="relative min-h-screen">
       <div className="fixed inset-0 -z-10">
@@ -27,9 +44,9 @@ const Index = () => {
       {view === "chooseRegister" && <RegistrationChooser onNavigate={setView as any} />}
       {view === "register" && <RegisterView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
       {view === "patientRegister" && <PatientRegisterView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
-      {view === "verify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} />}
-      {view === "patientVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} />}
-      {view === "loginVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} />}
+      {view === "verify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="signup" />}
+      {view === "patientVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="signup" />}
+      {view === "loginVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="email" />}
       {view === "dashboard" && <DashboardView onNavigate={setView as any} />}
     </div>
   );
