@@ -1,17 +1,20 @@
 import { Activity, AlertCircle, CheckCircle2, Mail, RefreshCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface VerifyViewProps {
   email: string;
   verificationCode: string;
   onNavigate: (view: "landing" | "dashboard") => void;
+  verificationType?: "signup" | "email";
 }
 
-const VerifyView = ({ email, verificationCode, onNavigate }: VerifyViewProps) => {
+const VerifyView = ({ email, verificationCode, onNavigate, verificationType = "signup" }: VerifyViewProps) => {
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [attempts, setAttempts] = useState(0);
   const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -40,35 +43,56 @@ const VerifyView = ({ email, verificationCode, onNavigate }: VerifyViewProps) =>
     }
   };
 
-  const handleVerify = () => {
+  const handleVerify = async () => {
     const enteredCode = code.join("");
     if (enteredCode.length < 6) {
       setError("Please enter all 6 digits");
       return;
     }
 
-    if (enteredCode === verificationCode) {
-      setVerified(true);
-      toast.success("Email verified successfully!");
-    } else {
-      const newAttempts = attempts + 1;
-      setAttempts(newAttempts);
-      setError(`Invalid verification code. ${3 - newAttempts} attempts remaining.`);
-      setCode(["", "", "", "", "", ""]);
-      inputsRef.current[0]?.focus();
+    setLoading(true);
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        email,
+        token: enteredCode,
+        type: verificationType,
+      });
 
-      if (newAttempts >= 3) {
-        toast.error("Too many failed attempts. Please register again.");
-        onNavigate("landing");
+      if (verifyError) {
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts);
+        setError(verifyError.message || `Invalid code. ${3 - newAttempts} attempts remaining.`);
+        setCode(["", "", "", "", "", ""]);
+        inputsRef.current[0]?.focus();
+
+        if (newAttempts >= 3) {
+          toast.error("Too many failed attempts. Please try again.");
+          onNavigate("landing");
+        }
+      } else {
+        setVerified(true);
+        toast.success("Email verified successfully!");
       }
+    } catch (err: any) {
+      setError(err.message || "Verification failed");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleResend = () => {
-    toast.success(`New verification code sent to ${email}`, {
-      description: `Demo code: ${verificationCode}`,
-      duration: 15000,
-    });
+  const handleResend = async () => {
+    try {
+      if (verificationType === "signup") {
+        await supabase.auth.resend({ type: "signup", email });
+      } else {
+        await supabase.auth.signInWithOtp({ email });
+      }
+      toast.success(`New verification code sent to ${email}`, {
+        description: "Check your Gmail inbox",
+      });
+    } catch (err: any) {
+      toast.error("Failed to resend code");
+    }
   };
 
   if (verified) {
@@ -80,7 +104,7 @@ const VerifyView = ({ email, verificationCode, onNavigate }: VerifyViewProps) =>
             <CheckCircle2 className="h-8 w-8 text-accent" />
           </div>
           <h2 className="text-2xl font-bold text-foreground mb-2">Success!</h2>
-          <p className="text-muted-foreground mb-8">Welcome to EmergencyConnect. Your hospital is now part of the network.</p>
+          <p className="text-muted-foreground mb-8">Welcome to EmergencyConnect. Your account has been verified.</p>
           <button onClick={() => onNavigate("dashboard")} className="btn-primary">
             Go to Dashboard
           </button>
@@ -101,7 +125,7 @@ const VerifyView = ({ email, verificationCode, onNavigate }: VerifyViewProps) =>
           Verification code sent to <span className="text-primary font-medium">{email || "your email"}</span>
         </p>
         <p className="text-xs text-muted-foreground/60 mb-8">
-          Enter the 6-digit code to verify your hospital email
+          Enter the 6-digit code from your email to verify
         </p>
         <div className="flex justify-center gap-3 mb-4" onPaste={handlePaste}>
           {code.map((digit, i) => (
@@ -124,8 +148,9 @@ const VerifyView = ({ email, verificationCode, onNavigate }: VerifyViewProps) =>
           </p>
         )}
         <button onClick={handleVerify} className="btn-primary mb-4"
-          style={{ opacity: code.every(c => c) ? 1 : 0.5 }}>
-          Verify
+          disabled={loading}
+          style={{ opacity: code.every(c => c) && !loading ? 1 : 0.5 }}>
+          {loading ? "Verifying..." : "Verify"}
         </button>
         <button
           onClick={handleResend}

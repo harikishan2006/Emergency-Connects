@@ -1,6 +1,7 @@
 import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface PatientRegisterViewProps {
   onNavigate: (view: "landing" | "login" | "chooseRegister" | "patientVerify") => void;
@@ -72,7 +73,9 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
     if (fieldErrors[key]) setErrors(e => ({ ...e, [key]: fieldErrors[key] }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validatePatientForm(form);
     if (Object.keys(validationErrors).length > 0) {
@@ -84,11 +87,41 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
       return;
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    onSetVerificationCode(code);
-    onSetEmail(form.email);
-    toast.success(`Verification code sent to ${form.email}`, { description: `Demo code: ${code}`, duration: 15000 });
-    onNavigate("patientVerify");
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            user_type: "patient",
+            first_name: form.firstName,
+            last_name: form.lastName,
+            blood_group: form.bloodGroup,
+            gender: form.gender,
+            phone: form.phone,
+            city: form.city,
+          },
+        },
+      });
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      onSetEmail(form.email);
+      onSetVerificationCode("");
+      toast.success(`Verification code sent to ${form.email}`, {
+        description: "Check your Gmail inbox for the 6-digit code",
+      });
+      onNavigate("patientVerify");
+    } catch (err: any) {
+      toast.error(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const renderInput = (key: string, label: string, placeholder: string, type = "text", hint?: string) => (
@@ -164,7 +197,9 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
           <h3 className="text-xs font-semibold text-primary uppercase tracking-wider pt-4">Security</h3>
           {renderInput("password", "Password", "••••••••", "password", "Min 8 chars, 1 uppercase, 1 number")}
 
-          <button type="submit" className="btn-primary mt-2">Register</button>
+          <button type="submit" className="btn-primary mt-2" disabled={loading}>
+            {loading ? "Registering..." : "Register"}
+          </button>
         </form>
 
         <p className="mt-6 text-center text-sm text-muted-foreground">

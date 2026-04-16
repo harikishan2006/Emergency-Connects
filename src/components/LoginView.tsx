@@ -1,6 +1,7 @@
 import { Activity, ArrowLeft, Building2, UserCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface LoginViewProps {
   onNavigate: (view: "landing" | "chooseRegister" | "dashboard" | "loginVerify") => void;
@@ -12,24 +13,58 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
   const [tab, setTab] = useState<"patient" | "hospital">("patient");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       toast.error("Please enter both email and password");
       return;
     }
 
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    onSetVerificationCode(code);
-    onSetEmail(email);
+    setLoading(true);
+    try {
+      // First verify credentials with signInWithPassword
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    toast.success(`Verification code sent to ${email}`, {
-      description: `Demo code: ${code}`,
-      duration: 15000,
-    });
+      if (signInError) {
+        // If email not confirmed, tell them to check email
+        if (signInError.message.includes("Email not confirmed")) {
+          toast.error("Please verify your email first. Check your Gmail inbox.");
+        } else {
+          toast.error(signInError.message);
+        }
+        setLoading(false);
+        return;
+      }
 
-    onNavigate("loginVerify");
+      // Sign out and send OTP for 2FA verification
+      await supabase.auth.signOut();
+
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email,
+      });
+
+      if (otpError) {
+        toast.error(otpError.message);
+        setLoading(false);
+        return;
+      }
+
+      onSetEmail(email);
+      onSetVerificationCode("");
+      toast.success(`Verification code sent to ${email}`, {
+        description: "Check your Gmail inbox for the 6-digit code",
+      });
+      onNavigate("loginVerify");
+    } catch (err: any) {
+      toast.error(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -83,7 +118,9 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Password</label>
             <input type="password" className="glass-input" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
-          <button type="submit" className="btn-primary mt-2">Login as {tab === "patient" ? "Patient" : "Hospital"}</button>
+          <button type="submit" className="btn-primary mt-2" disabled={loading}>
+            {loading ? "Signing in..." : `Login as ${tab === "patient" ? "Patient" : "Hospital"}`}
+          </button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}

@@ -1,6 +1,7 @@
 import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface RegisterViewProps {
   onNavigate: (view: "landing" | "login" | "verify" | "chooseRegister") => void;
@@ -109,13 +110,14 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validateForm(form);
 
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-      // Mark all fields as touched
       const allTouched: Record<string, boolean> = {};
       Object.keys(form).forEach(k => { allTouched[k] = true; });
       setTouched(allTouched);
@@ -123,18 +125,40 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
       return;
     }
 
-    // Generate a 6-digit verification code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-    onSetVerificationCode(code);
-    onSetEmail(form.email);
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password,
+        options: {
+          data: {
+            user_type: "hospital",
+            hospital_name: form.hospitalName,
+            address: form.address,
+            hospital_type: form.hospitalType,
+            lead_doctor: form.leadDoctor,
+            beds: form.beds,
+          },
+        },
+      });
 
-    // Show the code in a toast (simulating email delivery for demo)
-    toast.success(`Verification code sent to ${form.email}`, {
-      description: `Demo code: ${code}`,
-      duration: 15000,
-    });
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
 
-    onNavigate("verify");
+      onSetEmail(form.email);
+      onSetVerificationCode(""); // Real code sent via email
+      toast.success(`Verification code sent to ${form.email}`, {
+        description: "Check your Gmail inbox for the 6-digit code",
+      });
+      onNavigate("verify");
+    } catch (err: any) {
+      toast.error(err.message || "Registration failed");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const textFields: { key: string; label: string; type?: string; placeholder: string; hint?: string }[] = [
@@ -228,7 +252,9 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
             </div>
           ))}
 
-          <button type="submit" className="btn-primary mt-2">Register Hospital</button>
+          <button type="submit" className="btn-primary mt-2" disabled={loading}>
+            {loading ? "Registering..." : "Register Hospital"}
+          </button>
         </form>
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Already registered?{" "}
