@@ -324,6 +324,7 @@ const DashboardView = ({ onNavigate }: DashboardViewProps) => {
 
         {/* Live Map View */}
         <LiveMapView />
+        </>}
       </div>
     </div>
   );
