@@ -44,8 +44,8 @@ const Index = () => {
       {view === "chooseRegister" && <RegistrationChooser onNavigate={setView as any} />}
       {view === "register" && <RegisterView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
       {view === "patientRegister" && <PatientRegisterView onNavigate={setView as any} onSetEmail={setEmail} onSetVerificationCode={setVerificationCode} />}
-      {view === "verify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="signup" />}
-      {view === "patientVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="signup" />}
+      {view === "verify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="email" />}
+      {view === "patientVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="email" />}
       {view === "loginVerify" && <VerifyView email={email} verificationCode={verificationCode} onNavigate={setView as any} verificationType="email" />}
       {view === "dashboard" && <DashboardView onNavigate={setView as any} />}
     </div>
