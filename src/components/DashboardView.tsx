@@ -1,4 +1,4 @@
-import { Activity, Ambulance, Bed, Clock, Heart, LogOut, MapPin, Navigation, Phone, Route, Shield, Stethoscope, User, Users, Wifi } from "lucide-react";
+import { Activity, Ambulance, Bed, Clock, Heart, LayoutDashboard, ListChecks, LogOut, MapPin, Navigation, Phone, Route, Shield, Stethoscope, User, Users, Wifi } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,7 @@ import {
 } from "@/components/ui/table";
 import CriticalAlerts from "@/components/CriticalAlerts";
 import LiveMapView from "@/components/LiveMapView";
+import AvailabilityView from "@/components/AvailabilityView";
 
 interface DashboardViewProps {
   onNavigate: (view: "landing") => void;
@@ -39,6 +40,7 @@ const routeEstimations = [
 const DashboardView = ({ onNavigate }: DashboardViewProps) => {
   const [beds, setBeds] = useState(12);
   const totalBeds = 50;
+  const [tab, setTab] = useState<"overview" | "availability">("overview");
 
   return (
     <div className="min-h-screen animate-fade-in">
@@ -61,6 +63,27 @@ const DashboardView = ({ onNavigate }: DashboardViewProps) => {
       </nav>
 
       <div className="pt-20 px-4 md:px-10 pb-12 max-w-7xl mx-auto space-y-6">
+        {/* Tab switcher */}
+        <div className="flex gap-2 glass-card p-1.5 w-fit">
+          <button
+            onClick={() => setTab("overview")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              tab === "overview" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <LayoutDashboard className="h-4 w-4" /> Overview
+          </button>
+          <button
+            onClick={() => setTab("availability")}
+            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
+              tab === "availability" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <ListChecks className="h-4 w-4" /> Availability
+          </button>
+        </div>
+
+        {tab === "availability" ? <AvailabilityView /> : <>
         {/* Hospital Identity Header */}
         <div className="glass-card p-6 md:p-8 animate-fade-slide-up">
           <div className="flex flex-col md:flex-row md:items-center gap-6">
