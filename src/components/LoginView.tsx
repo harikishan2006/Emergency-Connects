@@ -24,28 +24,24 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
 
     setLoading(true);
     try {
-      // First verify credentials with signInWithPassword
+      // Verify password
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (signInError) {
-        // If email not confirmed, tell them to check email
-        if (signInError.message.includes("Email not confirmed")) {
-          toast.error("Please verify your email first. Check your Gmail inbox.");
-        } else {
-          toast.error(signInError.message);
-        }
+        toast.error(signInError.message);
         setLoading(false);
         return;
       }
 
-      // Sign out and send OTP for 2FA verification
+      // Sign out, then send 6-digit OTP code to Gmail
       await supabase.auth.signOut();
 
       const { error: otpError } = await supabase.auth.signInWithOtp({
         email,
+        options: { shouldCreateUser: false },
       });
 
       if (otpError) {
@@ -56,8 +52,8 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
 
       onSetEmail(email);
       onSetVerificationCode("");
-      toast.success(`Verification code sent to ${email}`, {
-        description: "Check your Gmail inbox for the 6-digit code",
+      toast.success(`6-digit code sent to ${email}`, {
+        description: "Check your Gmail inbox (and spam folder)",
       });
       onNavigate("loginVerify");
     } catch (err: any) {
