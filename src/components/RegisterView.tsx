@@ -142,16 +142,29 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
         },
       });
 
-      if (error) {
+      if (error && !error.message.includes("already registered")) {
         toast.error(error.message);
         setLoading(false);
         return;
       }
 
+      await supabase.auth.signOut();
+
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        email: form.email,
+        options: { shouldCreateUser: false },
+      });
+
+      if (otpError) {
+        toast.error(otpError.message);
+        setLoading(false);
+        return;
+      }
+
       onSetEmail(form.email);
-      onSetVerificationCode(""); // Real code sent via email
-      toast.success(`Verification code sent to ${form.email}`, {
-        description: "Check your Gmail inbox for the 6-digit code",
+      onSetVerificationCode("");
+      toast.success(`6-digit code sent to ${form.email}`, {
+        description: "Check your Gmail inbox (and spam folder)",
       });
       onNavigate("verify");
     } catch (err: any) {
