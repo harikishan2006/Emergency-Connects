@@ -14,7 +14,147 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      admissions: {
+        Row: {
+          admitted_at: string
+          doctor_id: string
+          hospital_id: string
+          id: string
+          patient_id: string
+          status: string
+        }
+        Insert: {
+          admitted_at?: string
+          doctor_id: string
+          hospital_id: string
+          id?: string
+          patient_id: string
+          status: string
+        }
+        Update: {
+          admitted_at?: string
+          doctor_id?: string
+          hospital_id?: string
+          id?: string
+          patient_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admissions_doctor_id_fkey"
+            columns: ["doctor_id"]
+            isOneToOne: false
+            referencedRelation: "doctors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admissions_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admissions_patient_id_fkey"
+            columns: ["patient_id"]
+            isOneToOne: false
+            referencedRelation: "patients"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      doctors: {
+        Row: {
+          created_at: string
+          hospital_id: string
+          id: string
+          name: string
+          on_duty: boolean
+          specialty: string
+        }
+        Insert: {
+          created_at?: string
+          hospital_id: string
+          id?: string
+          name: string
+          on_duty?: boolean
+          specialty: string
+        }
+        Update: {
+          created_at?: string
+          hospital_id?: string
+          id?: string
+          name?: string
+          on_duty?: boolean
+          specialty?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doctors_hospital_id_fkey"
+            columns: ["hospital_id"]
+            isOneToOne: false
+            referencedRelation: "hospitals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      hospitals: {
+        Row: {
+          available_beds: number
+          city: string
+          created_at: string
+          icu_available: number
+          id: string
+          name: string
+          total_beds: number
+        }
+        Insert: {
+          available_beds?: number
+          city: string
+          created_at?: string
+          icu_available?: number
+          id?: string
+          name: string
+          total_beds?: number
+        }
+        Update: {
+          available_beds?: number
+          city?: string
+          created_at?: string
+          icu_available?: number
+          id?: string
+          name?: string
+          total_beds?: number
+        }
+        Relationships: []
+      }
+      patients: {
+        Row: {
+          age: number
+          blood_group: string
+          condition: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          age: number
+          blood_group: string
+          condition: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          age?: number
+          blood_group?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
