@@ -1,4 +1,5 @@
 import { Activity, BarChart3, ShieldCheck, Users } from "lucide-react";
+import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
 
 interface LandingViewProps {
@@ -39,9 +40,10 @@ const LandingView = ({ onNavigate }: LandingViewProps) => {
           <span className="text-lg font-bold text-foreground tracking-tight">EmergencyConnect</span>
         </div>
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
-          <a href="#features" className="hover:text-primary transition-colors duration-300">Features</a>
-          <a href="#about" className="hover:text-primary transition-colors duration-300">About</a>
-          <a href="#contact" className="hover:text-primary transition-colors duration-300">Contact</a>
+          <Link to="/features" className="hover:text-primary transition-colors duration-300">Features</Link>
+          <Link to="/how-it-works" className="hover:text-primary transition-colors duration-300">How It Works</Link>
+          <Link to="/about" className="hover:text-primary transition-colors duration-300">About</Link>
+          <Link to="/contact" className="hover:text-primary transition-colors duration-300">Contact</Link>
         </div>
         <button onClick={() => onNavigate("login")} className="btn-outline text-xs md:text-sm">
           Hospital Portal
