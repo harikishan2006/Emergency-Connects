@@ -1,4 +1,5 @@
 import { Activity } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const Footer = () => {
   return (
@@ -20,8 +21,8 @@ const Footer = () => {
           <div>
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Platform</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#features" className="hover:text-primary transition-colors">Features</a></li>
-              <li><a href="#about" className="hover:text-primary transition-colors">How it Works</a></li>
+              <li><Link to="/features" className="hover:text-primary transition-colors">Features</Link></li>
+              <li><Link to="/how-it-works" className="hover:text-primary transition-colors">How it Works</Link></li>
               <li><a href="#" className="hover:text-primary transition-colors">Compliance</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">API Docs</a></li>
             </ul>
@@ -42,8 +43,8 @@ const Footer = () => {
           <div>
             <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-3">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><a href="#about" className="hover:text-primary transition-colors">About Us</a></li>
-              <li><a href="#contact" className="hover:text-primary transition-colors">Contact</a></li>
+              <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+              <li><Link to="/contact" className="hover:text-primary transition-colors">Contact</Link></li>
               <li><a href="#" className="hover:text-primary transition-colors">Privacy Policy</a></li>
               <li><a href="#" className="hover:text-primary transition-colors">Terms of Service</a></li>
             </ul>
