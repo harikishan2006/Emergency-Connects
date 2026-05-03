@@ -1,7 +1,6 @@
 import { Activity, AlertCircle, CheckCircle2, Mail, RefreshCw } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { sendOtp, verifyOtp } from "@/lib/otpClient";
 
 interface VerifyViewProps {
