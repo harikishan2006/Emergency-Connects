@@ -2,6 +2,7 @@ import { Activity, AlertCircle, CheckCircle2, Mail, RefreshCw } from "lucide-rea
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendOtp, verifyOtp } from "@/lib/otpClient";
 
 interface VerifyViewProps {
   email: string;
@@ -52,16 +53,14 @@ const VerifyView = ({ email, verificationCode, onNavigate, verificationType = "s
 
     setLoading(true);
     try {
-      const { error: verifyError } = await supabase.auth.verifyOtp({
-        email,
-        token: enteredCode,
-        type: verificationType,
-      });
-
-      if (verifyError) {
+      try {
+        await verifyOtp(email, enteredCode);
+        setVerified(true);
+        toast.success("Email verified successfully!");
+      } catch (verifyErr: any) {
         const newAttempts = attempts + 1;
         setAttempts(newAttempts);
-        setError(verifyError.message || `Invalid code. ${3 - newAttempts} attempts remaining.`);
+        setError(verifyErr.message || `Invalid code. ${3 - newAttempts} attempts remaining.`);
         setCode(["", "", "", "", "", ""]);
         inputsRef.current[0]?.focus();
 
@@ -69,9 +68,6 @@ const VerifyView = ({ email, verificationCode, onNavigate, verificationType = "s
           toast.error("Too many failed attempts. Please try again.");
           onNavigate("landing");
         }
-      } else {
-        setVerified(true);
-        toast.success("Email verified successfully!");
       }
     } catch (err: any) {
       setError(err.message || "Verification failed");
@@ -82,11 +78,7 @@ const VerifyView = ({ email, verificationCode, onNavigate, verificationType = "s
 
   const handleResend = async () => {
     try {
-      if (verificationType === "signup") {
-        await supabase.auth.resend({ type: "signup", email });
-      } else {
-        await supabase.auth.signInWithOtp({ email });
-      }
+      await sendOtp(email);
       toast.success(`New verification code sent to ${email}`, {
         description: "Check your Gmail inbox",
       });
