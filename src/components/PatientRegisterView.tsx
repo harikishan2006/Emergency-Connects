@@ -2,6 +2,7 @@ import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendOtp } from "@/lib/otpClient";
 
 interface PatientRegisterViewProps {
   onNavigate: (view: "landing" | "login" | "chooseRegister" | "patientVerify") => void;
@@ -85,14 +86,11 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
       // Sign out so we can send OTP code to Gmail
       await supabase.auth.signOut();
 
-      // Send 6-digit OTP code to Gmail
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: form.email,
-        options: { shouldCreateUser: false },
-      });
-
-      if (otpError) {
-        toast.error(otpError.message);
+      // Send 6-digit OTP code via local Node.js + Gmail SMTP server
+      try {
+        await sendOtp(form.email);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to send OTP. Is the OTP server running?");
         setLoading(false);
         return;
       }
