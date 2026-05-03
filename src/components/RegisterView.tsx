@@ -2,6 +2,7 @@ import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { sendOtp } from "@/lib/otpClient";
 
 interface RegisterViewProps {
   onNavigate: (view: "landing" | "login" | "verify" | "chooseRegister") => void;
@@ -150,13 +151,10 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
 
       await supabase.auth.signOut();
 
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email: form.email,
-        options: { shouldCreateUser: false },
-      });
-
-      if (otpError) {
-        toast.error(otpError.message);
+      try {
+        await sendOtp(form.email);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to send OTP. Is the OTP server running?");
         setLoading(false);
         return;
       }
