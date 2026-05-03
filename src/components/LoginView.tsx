@@ -1,7 +1,9 @@
-import { Activity, ArrowLeft, Building2, UserCircle } from "lucide-react";
+import { Activity, ArrowLeft, Building2, Settings, UserCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "react-router-dom";
+import { sendOtp } from "@/lib/otpClient";
 
 interface LoginViewProps {
   onNavigate: (view: "landing" | "chooseRegister" | "dashboard" | "loginVerify") => void;
@@ -39,13 +41,10 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
       // Sign out, then send 6-digit OTP code to Gmail
       await supabase.auth.signOut();
 
-      const { error: otpError } = await supabase.auth.signInWithOtp({
-        email,
-        options: { shouldCreateUser: false },
-      });
-
-      if (otpError) {
-        toast.error(otpError.message);
+      try {
+        await sendOtp(email);
+      } catch (err: any) {
+        toast.error(err.message || "Failed to send OTP. Is the OTP server running?");
         setLoading(false);
         return;
       }
@@ -121,6 +120,11 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <button onClick={() => onNavigate("chooseRegister")} className="text-primary font-medium hover:underline">Register here</button>
+        </p>
+        <p className="mt-3 text-center text-xs text-muted-foreground/70">
+          <Link to="/otp-settings" className="inline-flex items-center gap-1 hover:text-primary">
+            <Settings className="h-3 w-3" /> OTP server settings
+          </Link>
         </p>
       </div>
     </div>
