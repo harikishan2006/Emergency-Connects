@@ -14,6 +14,7 @@ import ApiDocs from "./pages/marketing/ApiDocs.tsx";
 import Portal from "./pages/marketing/Portals.tsx";
 import Privacy from "./pages/marketing/Privacy.tsx";
 import Terms from "./pages/marketing/Terms.tsx";
+import OtpSettings from "./pages/OtpSettings.tsx";
 
 const queryClient = new QueryClient();
 
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/admin-dashboard" element={<Portal kind="admin" />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/otp-settings" element={<OtpSettings />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
