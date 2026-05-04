@@ -14,7 +14,8 @@ const UserDirectoryView = () => {
       // Note: We are fetching from our 'hospitals' and 'profiles' tables 
       // as Supabase auth.users is protected.
       try {
-        const { data: profiles, error: pError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: profiles, error: pError } = await (supabase as any)
           .from("profiles")
           .select("*")
           .order("created_at", { ascending: false });

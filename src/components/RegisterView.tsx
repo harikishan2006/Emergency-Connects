@@ -45,7 +45,8 @@ const RegisterView = ({ onNavigate }: RegisterViewProps) => {
       if (error) throw error;
 
       if (data.user) {
-        const { error: profileError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: profileError } = await (supabase as any)
           .from("profiles")
           .insert([
             {

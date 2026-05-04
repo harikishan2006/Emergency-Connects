@@ -3,6 +3,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import LoadingOverlay from "./LoadingOverlay";
+import BrandLogo from "./BrandLogo";
+
 
 interface PatientRegisterViewProps {
   onNavigate: (view: "landing" | "login" | "chooseRegister" | "dashboard") => void;
@@ -79,7 +81,8 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
 
       if (data?.user) {
         // Automatically sync to profiles table for the User Directory
-        const { error: profileError } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { error: profileError } = await (supabase as any)
           .from("profiles")
           .insert([
             {

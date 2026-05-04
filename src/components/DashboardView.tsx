@@ -2,7 +2,8 @@ import {
   Activity, Ambulance, Bed, Clock, Heart, LayoutDashboard, ListChecks, 
   LogOut, MapPin, Navigation, Phone, Route, Search, Shield, ShieldCheck, 
   Stethoscope, User, Users, Wifi, AlertCircle, BarChart3, Settings, 
-  History, Map as MapIcon, Bell, ChevronRight, TrendingDown, TrendingUp
+  History, Map as MapIcon, Bell, ChevronRight, TrendingDown, TrendingUp,
+  Building2, CheckCircle2
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -21,7 +22,7 @@ interface DashboardViewProps {
 }
 
 const DashboardView = ({ onNavigate }: DashboardViewProps) => {
-  const [tab, setTab] = useState<"dashboard" | "search" | "availability" | "users" | "analytics" | "logs" | "queue" | "map">("dashboard");
+  const [tab, setTab] = useState<"dashboard" | "search" | "availability" | "users" | "analytics" | "logs" | "queue" | "map" | "services">("dashboard");
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -388,7 +389,6 @@ const DashboardView = ({ onNavigate }: DashboardViewProps) => {
           )}
 
           {tab === "availability" && <AvailabilityView currentUser={currentUser} />}
-          {tab === "search" && <HospitalSearchView />}
           {tab === "services" && <ServicesView />}
           {tab === "users" && <UserDirectoryView />}
         </div>

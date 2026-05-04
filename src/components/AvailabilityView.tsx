@@ -92,7 +92,7 @@ const AvailabilityView = ({ currentUser }: AvailabilityViewProps) => {
         const { data: hData } = await supabase
           .from("hospitals")
           .select("*")
-          .eq("hospital_name", currentUser.user_metadata.hospital_name)
+          .eq("name", currentUser.user_metadata.hospital_name)
           .single();
         if (hData) setMyHospital(hData);
       }
@@ -105,7 +105,8 @@ const AvailabilityView = ({ currentUser }: AvailabilityViewProps) => {
     if (!myHospital) return;
     setSaving(true);
     try {
-      const { error } = await supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await (supabase as any)
         .from("hospitals")
         .update({
           available_beds: myHospital.available_beds,
