@@ -73,7 +73,7 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
         },
       });
 
-      if (signUpError && !signUpError.message.includes("already registered")) {
+      if (signUpError) {
         toast.error(signUpError.message);
         setLoading(false);
         return;
