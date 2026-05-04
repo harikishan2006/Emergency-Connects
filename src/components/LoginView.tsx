@@ -1,17 +1,13 @@
-import { Activity, ArrowLeft, Building2, Settings, UserCircle } from "lucide-react";
+import { Activity, ArrowLeft, Building2, UserCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
-import { sendOtp } from "@/lib/otpClient";
 
 interface LoginViewProps {
-  onNavigate: (view: "landing" | "chooseRegister" | "dashboard" | "loginVerify") => void;
-  onSetEmail: (email: string) => void;
-  onSetVerificationCode: (code: string) => void;
+  onNavigate: (view: "landing" | "chooseRegister" | "dashboard") => void;
 }
 
-const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewProps) => {
+const LoginView = ({ onNavigate }: LoginViewProps) => {
   const [tab, setTab] = useState<"patient" | "hospital">("patient");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -26,35 +22,15 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
 
     setLoading(true);
     try {
-      // Verify password
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
-      if (signInError) {
-        toast.error(signInError.message);
-        setLoading(false);
-        return;
-      }
+      if (error) throw error;
 
-      // Sign out, then send 6-digit OTP code to Gmail
-      await supabase.auth.signOut();
-
-      try {
-        await sendOtp(email);
-      } catch (err: any) {
-        toast.error(err.message || "Failed to send OTP. Is the OTP server running?");
-        setLoading(false);
-        return;
-      }
-
-      onSetEmail(email);
-      onSetVerificationCode("");
-      toast.success(`6-digit code sent to ${email}`, {
-        description: "Check your Gmail inbox (and spam folder)",
-      });
-      onNavigate("loginVerify");
+      toast.success("Login successful");
+      onNavigate("dashboard");
     } catch (err: any) {
       toast.error(err.message || "Login failed");
     } finally {
@@ -120,11 +96,6 @@ const LoginView = ({ onNavigate, onSetEmail, onSetVerificationCode }: LoginViewP
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Don't have an account?{" "}
           <button onClick={() => onNavigate("chooseRegister")} className="text-primary font-medium hover:underline">Register here</button>
-        </p>
-        <p className="mt-3 text-center text-xs text-muted-foreground/70">
-          <Link to="/otp-settings" className="inline-flex items-center gap-1 hover:text-primary">
-            <Settings className="h-3 w-3" /> OTP server settings
-          </Link>
         </p>
       </div>
     </div>
