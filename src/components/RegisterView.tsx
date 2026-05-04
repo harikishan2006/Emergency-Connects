@@ -2,12 +2,9 @@ import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { sendOtp } from "@/lib/otpClient";
 
 interface RegisterViewProps {
-  onNavigate: (view: "landing" | "login" | "verify" | "chooseRegister") => void;
-  onSetEmail: (email: string) => void;
-  onSetVerificationCode: (code: string) => void;
+  onNavigate: (view: "landing" | "login" | "chooseRegister" | "dashboard") => void;
 }
 
 interface FormErrors {
@@ -81,7 +78,7 @@ const validateForm = (form: Record<string, string>): FormErrors => {
 const hospitalTypes = ["Government", "Private", "Trust/NGO", "Teaching Hospital", "Specialty Center"];
 const specialties = ["General Medicine", "Cardiology", "Neurology", "Orthopedics", "Oncology", "Pediatrics", "Trauma & Emergency", "Multi-Specialty"];
 
-const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: RegisterViewProps) => {
+const RegisterView = ({ onNavigate }: RegisterViewProps) => {
   const [form, setForm] = useState({
     hospitalName: "", address: "", hospitalType: "", licenseNumber: "",
     leadDoctor: "", doctorSpecialty: "", doctorLicenseId: "", dutyDoctor: "",
@@ -149,22 +146,8 @@ const RegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: Registe
         return;
       }
 
-      await supabase.auth.signOut();
-
-      try {
-        await sendOtp(form.email);
-      } catch (err: any) {
-        toast.error(err.message || "Failed to send OTP. Is the OTP server running?");
-        setLoading(false);
-        return;
-      }
-
-      onSetEmail(form.email);
-      onSetVerificationCode("");
-      toast.success(`6-digit code sent to ${form.email}`, {
-        description: "Check your Gmail inbox (and spam folder)",
-      });
-      onNavigate("verify");
+      toast.success("Registration successful");
+      onNavigate("dashboard");
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
     } finally {
