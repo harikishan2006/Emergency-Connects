@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { Activity } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import hospitalBg from "@/assets/hospital-bg.jpg";
 import LandingView from "@/components/LandingView";

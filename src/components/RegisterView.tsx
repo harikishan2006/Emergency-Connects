@@ -45,12 +45,20 @@ const RegisterView = ({ onNavigate }: RegisterViewProps) => {
       if (error) throw error;
 
       if (data.user) {
-        await (supabase.from("profiles") as any).insert({
-          id: data.user.id,
-          name: form.hospitalName,
-          email: form.email.trim(),
-          user_type: "hospital"
-        });
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert([
+            {
+              id: data.user.id,
+              name: form.hospitalName,
+              email: form.email.trim(),
+              user_type: "hospital",
+            },
+          ]);
+
+        if (profileError) {
+          console.error("Profile sync error:", profileError);
+        }
 
         toast.success("Registration successful! Please check your email to verify.");
         onNavigate("login");

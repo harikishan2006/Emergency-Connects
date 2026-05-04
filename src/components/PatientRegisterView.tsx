@@ -79,13 +79,21 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
 
       if (data?.user) {
         // Automatically sync to profiles table for the User Directory
-        await (supabase.from("profiles") as any).insert({
-          id: data.user.id,
-          name: form.name,
-          email: form.email.trim(),
-          phone: form.phone,
-          user_type: "patient"
-        });
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert([
+            {
+              id: data.user.id,
+              name: form.name,
+              email: form.email.trim(),
+              phone: form.phone,
+              user_type: "patient",
+            },
+          ]);
+
+        if (profileError) {
+          console.error("Profile sync error:", profileError);
+        }
 
         if (data.session) {
           toast.success("Registration successful! Syncing session...");
