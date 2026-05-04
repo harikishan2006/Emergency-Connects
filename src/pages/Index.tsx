@@ -7,8 +7,9 @@ import RegistrationChooser from "@/components/RegistrationChooser";
 import RegisterView from "@/components/RegisterView";
 import PatientRegisterView from "@/components/PatientRegisterView";
 import DashboardView from "@/components/DashboardView";
+import DiseaseIntakeView from "@/components/DiseaseIntakeView";
 
-type View = "landing" | "login" | "chooseRegister" | "register" | "patientRegister" | "dashboard";
+type View = "landing" | "login" | "chooseRegister" | "register" | "patientRegister" | "intake" | "dashboard";
 
 const Index = () => {
   const [view, setView] = useState<View>("landing");
@@ -17,13 +18,16 @@ const Index = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "SIGNED_IN" && session) {
-        setView("dashboard");
+        setView((prev) => (prev === "intake" || prev === "dashboard" ? prev : "intake"));
       }
     });
 
     // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) setView("dashboard");
+      if (session) {
+        const hasIntake = !!localStorage.getItem("ec_intake");
+        setView(hasIntake ? "dashboard" : "intake");
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -41,6 +45,7 @@ const Index = () => {
       {view === "chooseRegister" && <RegistrationChooser onNavigate={setView as any} />}
       {view === "register" && <RegisterView onNavigate={setView as any} />}
       {view === "patientRegister" && <PatientRegisterView onNavigate={setView as any} />}
+      {view === "intake" && <DiseaseIntakeView onNavigate={setView as any} />}
       {view === "dashboard" && <DashboardView onNavigate={setView as any} />}
     </div>
   );
