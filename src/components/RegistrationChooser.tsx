@@ -1,4 +1,5 @@
-import { Activity, ArrowLeft, Building2, UserCircle } from "lucide-react";
+import { ArrowLeft, UserCircle } from "lucide-react";
+import BrandLogo from "./BrandLogo";
 
 interface RegistrationChooserProps {
   onNavigate: (view: "landing" | "register" | "patientRegister") => void;
@@ -11,10 +12,7 @@ const RegistrationChooser = ({ onNavigate }: RegistrationChooserProps) => {
         <button onClick={() => onNavigate("landing")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-300 mb-6">
           <ArrowLeft className="h-4 w-4" /> Back
         </button>
-        <div className="flex items-center gap-2 mb-6">
-          <Activity className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold text-foreground">EmergencyConnect</span>
-        </div>
+        <BrandLogo className="flex items-center gap-2 mb-6" />
         <h2 className="text-2xl font-bold text-foreground mb-2">Choose Registration Type</h2>
         <p className="text-sm text-muted-foreground mb-8">Select how you'd like to join the network</p>
 
@@ -37,23 +35,6 @@ const RegistrationChooser = ({ onNavigate }: RegistrationChooserProps) => {
             </div>
           </button>
 
-          <button
-            onClick={() => onNavigate("register")}
-            className="glass-card p-6 text-left hover:border-primary/40 transition-all duration-300 group cursor-pointer"
-          >
-            <div className="flex items-start gap-4">
-              <div className="h-12 w-12 rounded-lg flex items-center justify-center shrink-0"
-                style={{ background: "hsla(170, 70%, 45%, 0.12)" }}>
-                <Building2 className="h-6 w-6 text-accent" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground mb-1 group-hover:text-accent transition-colors">🏥 Hospital Registration</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Register your medical facility to join the EmergencyConnect network, manage beds, staff, and ambulance dispatch.
-                </p>
-              </div>
-            </div>
-          </button>
         </div>
       </div>
     </div>

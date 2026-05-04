@@ -1,7 +1,8 @@
-import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
+import { Activity, AlertCircle, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import LoadingOverlay from "./LoadingOverlay";
 
 interface PatientRegisterViewProps {
   onNavigate: (view: "landing" | "login" | "chooseRegister" | "dashboard") => void;
@@ -34,6 +35,7 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const update = (key: string, val: string) => {
@@ -61,8 +63,8 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
 
     setLoading(true);
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: form.email,
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email: form.email.trim(),
         password: form.password,
         options: {
           data: {
@@ -73,14 +75,25 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
         },
       });
 
-      if (signUpError) {
-        toast.error(signUpError.message);
-        setLoading(false);
-        return;
-      }
+      if (signUpError) throw signUpError;
 
-      toast.success("Registration successful");
-      onNavigate("dashboard");
+      if (data?.user) {
+        // Automatically sync to profiles table for the User Directory
+        await (supabase.from("profiles") as any).insert({
+          id: data.user.id,
+          name: form.name,
+          email: form.email.trim(),
+          phone: form.phone,
+          user_type: "patient"
+        });
+
+        if (data.session) {
+          toast.success("Registration successful! Syncing session...");
+        } else {
+          toast.success("Registration initiated! Please check your email to verify your account.");
+          onNavigate("login");
+        }
+      }
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
     } finally {
@@ -91,14 +104,25 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
   const renderInput = (key: string, label: string, placeholder: string, type = "text", hint?: string) => (
     <div key={key}>
       <label className="text-xs font-medium text-muted-foreground mb-1.5 block">{label}</label>
-      <input
-        type={type}
-        className={`glass-input ${errors[key] && touched[key] ? "!border-destructive/60" : ""}`}
-        placeholder={placeholder}
-        value={form[key]}
-        onChange={e => update(key, e.target.value)}
-        onBlur={() => handleBlur(key)}
-      />
+      <div className="relative">
+        <input
+          type={type === "password" ? (showPassword ? "text" : "password") : type}
+          className={`glass-input ${type === "password" ? "pr-10" : ""} ${errors[key] && touched[key] ? "!border-destructive/60" : ""}`}
+          placeholder={placeholder}
+          value={form[key]}
+          onChange={e => update(key, e.target.value)}
+          onBlur={() => handleBlur(key)}
+        />
+        {type === "password" && (
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        )}
+      </div>
       {errors[key] && touched[key] ? (
         <p className="text-[11px] text-destructive mt-1 flex items-center gap-1"><AlertCircle className="h-3 w-3 flex-shrink-0" /> {errors[key]}</p>
       ) : hint && <p className="text-[10px] text-muted-foreground/60 mt-1">{hint}</p>}
@@ -106,35 +130,38 @@ const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
   );
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6 py-20 animate-fade-in">
-      <div className="glass-card p-8 md:p-10 w-full max-w-md animate-fade-slide-up">
-        <button onClick={() => onNavigate("chooseRegister")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-300 mb-6">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-        <div className="flex items-center gap-2 mb-6">
-          <Activity className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold text-foreground">EmergencyConnect</span>
-        </div>
-        <h2 className="text-2xl font-bold text-foreground mb-2">Patient Registration</h2>
-        <p className="text-sm text-muted-foreground mb-8">Quick signup with email and password</p>
-
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {renderInput("name", "Full Name", "Rajesh Kumar")}
-          {renderInput("email", "Email Address", "rajesh@gmail.com", "email", "Use this email to sign in")}
-          {renderInput("phone", "Mobile Number", "9876543210", "tel", "10-digit Indian mobile number")}
-          {renderInput("password", "Password", "••••••••", "password", "Min 8 chars, 1 uppercase, 1 number")}
-
-          <button type="submit" className="btn-primary mt-2" disabled={loading}>
-            {loading ? "Registering..." : "Register Patient"}
+    <>
+      {loading && <LoadingOverlay />}
+      <div className="min-h-screen flex items-center justify-center px-6 py-20 animate-fade-in">
+        <div className="glass-card p-8 md:p-10 w-full max-w-md animate-fade-slide-up">
+          <button onClick={() => onNavigate("chooseRegister")} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-primary transition-colors duration-300 mb-6">
+            <ArrowLeft className="h-4 w-4" /> Back
           </button>
-        </form>
+          <div className="flex items-center gap-2 mb-6">
+            <BrandLogo iconClassName="h-6 w-6" />
+            <span className="text-lg font-bold text-foreground">EmergencyConnect</span>
+          </div>
+          <h2 className="text-2xl font-bold text-foreground mb-2">Patient Registration</h2>
+          <p className="text-sm text-muted-foreground mb-8">Join the network securely</p>
 
-        <p className="mt-6 text-center text-sm text-muted-foreground">
-          Already registered?{" "}
-          <button onClick={() => onNavigate("login")} className="text-primary font-medium hover:underline">Sign in</button>
-        </p>
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {renderInput("name", "Full Name", "Rajesh Kumar")}
+            {renderInput("email", "Email Address", "rajesh@gmail.com", "email", "Verification will be sent to this email")}
+            {renderInput("phone", "Mobile Number", "9876543210", "tel")}
+            {renderInput("password", "Create Password", "••••••••", "password", "Min 8 characters")}
+
+            <button type="submit" className="btn-primary mt-2" disabled={loading}>
+              {loading ? "Registering..." : "Register Account"}
+            </button>
+          </form>
+
+          <p className="mt-6 text-center text-sm text-muted-foreground">
+            Already registered?{" "}
+            <button onClick={() => onNavigate("login")} className="text-primary font-medium hover:underline">Sign in</button>
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

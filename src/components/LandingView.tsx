@@ -1,6 +1,7 @@
 import { Activity, BarChart3, ShieldCheck, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 import Footer from "@/components/Footer";
+import BrandLogo from "@/components/BrandLogo";
 
 interface LandingViewProps {
   onNavigate: (view: "login" | "chooseRegister") => void;
@@ -35,10 +36,7 @@ const LandingView = ({ onNavigate }: LandingViewProps) => {
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4"
         style={{ background: "hsla(207, 100%, 8%, 0.6)", backdropFilter: "blur(12px)" }}>
-        <div className="flex items-center gap-2">
-          <Activity className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold text-foreground tracking-tight">EmergencyConnect</span>
-        </div>
+        <BrandLogo />
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <Link to="/features" className="hover:text-primary transition-colors duration-300">Features</Link>
           <Link to="/how-it-works" className="hover:text-primary transition-colors duration-300">How It Works</Link>

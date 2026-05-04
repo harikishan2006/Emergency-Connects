@@ -1,7 +1,8 @@
-import { Activity, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import Footer from "@/components/Footer";
 import hospitalBg from "@/assets/hospital-bg.jpg";
+import BrandLogo from "@/components/BrandLogo";
 
 interface PageShellProps {
   title: string;
@@ -20,9 +21,8 @@ const PageShell = ({ title, subtitle, children }: PageShellProps) => {
 
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4"
         style={{ background: "hsla(207, 100%, 8%, 0.6)", backdropFilter: "blur(12px)" }}>
-        <Link to="/" className="flex items-center gap-2">
-          <Activity className="h-6 w-6 text-primary" />
-          <span className="text-lg font-bold text-foreground tracking-tight">EmergencyConnect</span>
+        <Link to="/">
+          <BrandLogo />
         </Link>
         <div className="hidden md:flex items-center gap-8 text-sm text-muted-foreground">
           <Link to="/features" className="hover:text-primary transition-colors duration-300">Features</Link>

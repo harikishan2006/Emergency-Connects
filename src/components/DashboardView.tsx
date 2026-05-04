@@ -1,331 +1,398 @@
-import { Activity, Ambulance, Bed, Clock, Heart, LayoutDashboard, ListChecks, LogOut, MapPin, Navigation, Phone, Route, Shield, Stethoscope, User, Users, Wifi } from "lucide-react";
-import { useState } from "react";
+import { 
+  Activity, Ambulance, Bed, Clock, Heart, LayoutDashboard, ListChecks, 
+  LogOut, MapPin, Navigation, Phone, Route, Search, Shield, ShieldCheck, 
+  Stethoscope, User, Users, Wifi, AlertCircle, BarChart3, Settings, 
+  History, Map as MapIcon, Bell, ChevronRight, TrendingDown, TrendingUp
+} from "lucide-react";
+import { useState, useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import BrandLogo from "@/components/BrandLogo";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
-} from "@/components/ui/table";
-import CriticalAlerts from "@/components/CriticalAlerts";
-import LiveMapView from "@/components/LiveMapView";
-import AvailabilityView from "@/components/AvailabilityView";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { supabase } from "@/integrations/supabase/client";
+import AvailabilityView from "./AvailabilityView";
+import HospitalSearchView from "./HospitalSearchView";
+import ServicesView from "./ServicesView";
+import UserDirectoryView from "./UserDirectoryView";
 
 interface DashboardViewProps {
   onNavigate: (view: "landing") => void;
 }
 
-const nearbyHospitals = [
-  { name: "MGM Healthcare", location: "Nelson Manickam Road", doctor: "Dr. S. Ananth", specialty: "Critical Care & ECMO", beds: 8, status: "Available" },
-  { name: "SIMS Hospital", location: "Vadapalani", doctor: "Dr. Raju Sivasamy", specialty: "Senior Orthopaedic Surgeon", beds: 3, status: "Limited" },
-  { name: "MIOT International", location: "Manapakkam", doctor: "Dr. Prithvi Mohandas", specialty: "Hip & Joint Replacement", beds: 14, status: "Available" },
-  { name: "Kauvery Hospital", location: "Alwarpet", doctor: "Dr. Aravindan Selvaraj", specialty: "Multi-Organ Transplant", beds: 6, status: "Available" },
-  { name: "Fortis Malar", location: "Adyar", doctor: "Dr. Nandakumar Sundaram", specialty: "Traumatology & Spine", beds: 2, status: "Critical" },
-];
-
-const ambulanceUnits = [
-  { id: "AMB-01", type: "ALS", status: "Available", location: "Apollo Base", crew: "Paramedic Team A" },
-  { id: "AMB-02", type: "BLS", status: "En Route", location: "Near Vadapalani", crew: "Paramedic Team B" },
-  { id: "AMB-03", type: "ALS", status: "On Scene", location: "T. Nagar Junction", crew: "Paramedic Team C" },
-  { id: "AMB-04", type: "MICU", status: "Available", location: "Apollo Base", crew: "Critical Care Unit" },
-];
-
-const routeEstimations = [
-  { from: "Apollo Greams Road", to: "MGM Healthcare", distance: "6.2 km", eta: "14 min", traffic: "Moderate" },
-  { from: "Apollo Greams Road", to: "SIMS Hospital", distance: "8.7 km", eta: "22 min", traffic: "Heavy" },
-  { from: "Apollo Greams Road", to: "MIOT International", distance: "12.4 km", eta: "28 min", traffic: "Light" },
-  { from: "Apollo Greams Road", to: "Kauvery Hospital", distance: "3.1 km", eta: "8 min", traffic: "Light" },
-  { from: "Apollo Greams Road", to: "Fortis Malar", distance: "9.5 km", eta: "20 min", traffic: "Moderate" },
-];
-
 const DashboardView = ({ onNavigate }: DashboardViewProps) => {
-  const [beds, setBeds] = useState(12);
-  const totalBeds = 50;
-  const [tab, setTab] = useState<"overview" | "availability">("overview");
+  const [tab, setTab] = useState<"dashboard" | "search" | "availability" | "users" | "analytics" | "logs" | "queue" | "map">("dashboard");
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    const getSession = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setCurrentUser(user);
+      // Ensure we stay on dashboard even if role check is slow
+    };
+    getSession();
+    return () => clearInterval(timer);
+  }, []);
+
+  const isHospital = currentUser?.user_metadata?.user_type === "hospital";
+
+  const formatTime = (date: Date) => {
+    return date.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }) + ' IST';
+  };
+
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+  };
+
+  const NavItem = ({ icon: Icon, label, id, active, count, onClick }: { icon: any, label: string, id: string, active?: boolean, count?: string, onClick?: () => void }) => (
+    <button 
+      onClick={onClick || (() => setTab(id as any))}
+      className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all duration-300 group ${
+        active ? "bg-primary/10 text-primary" : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+      }`}
+    >
+      <div className="flex items-center gap-3">
+        <Icon className={`h-4 w-4 transition-colors ${active ? "text-primary" : "group-hover:text-primary"}`} />
+        <span className="text-sm font-medium">{label}</span>
+      </div>
+      {count && (
+        <span className="px-1.5 py-0.5 rounded-md bg-primary/20 text-[10px] font-bold text-primary border border-primary/20">
+          {count}
+        </span>
+      )}
+    </button>
+  );
 
   return (
-    <div className="min-h-screen animate-fade-in">
-      {/* Top Bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-3"
-        style={{ background: "hsla(207, 100%, 8%, 0.7)", backdropFilter: "blur(16px)" }}>
-        <div className="flex items-center gap-2">
-          <Activity className="h-5 w-5 text-primary" />
-          <span className="text-base font-bold text-foreground">EmergencyConnect</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge className="bg-accent/20 text-accent border-accent/30 text-xs gap-1">
-            <Wifi className="h-3 w-3" /> Live Sync
-          </Badge>
-          <button onClick={() => onNavigate("landing")}
-            className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-destructive transition-colors">
-            <LogOut className="h-4 w-4" /> Logout
-          </button>
-        </div>
-      </nav>
+    <div className="min-h-screen bg-[#020817] text-foreground flex overflow-hidden">
+      {/* SIDEBAR NAVIGATION */}
+      <aside className="w-64 border-r border-white/5 bg-[#030a1c] flex flex-col shrink-0">
+        <div className="p-6">
+          <BrandLogo iconClassName="h-6 w-6" className="mb-8" />
+          
+          <div className="space-y-1">
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest px-4 mb-2">Main</p>
+            <NavItem icon={LayoutDashboard} label={isHospital ? "Dashboard" : "My Health Hub"} id="dashboard" active={tab === "dashboard"} />
+            <NavItem icon={Route} label={isHospital ? "Live Routing" : "Find Hospitals"} id="search" active={tab === "search"} count={isHospital ? "3" : undefined} />
+            {isHospital && <NavItem icon={Bed} label="Bed Management" id="availability" active={tab === "availability"} />}
+            {isHospital && <NavItem icon={Users} label="Doctor Roster" id="users" active={tab === "users"} />}
+          </div>
 
-      <div className="pt-20 px-4 md:px-10 pb-12 max-w-7xl mx-auto space-y-6">
-        {/* Tab switcher */}
-        <div className="flex gap-2 glass-card p-1.5 w-fit">
-          <button
-            onClick={() => setTab("overview")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              tab === "overview" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <LayoutDashboard className="h-4 w-4" /> Overview
-          </button>
-          <button
-            onClick={() => setTab("availability")}
-            className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-              tab === "availability" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <ListChecks className="h-4 w-4" /> Availability
-          </button>
-        </div>
+          <div className="space-y-1 mt-8">
+            <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest px-4 mb-2">Operations</p>
+            <NavItem icon={BarChart3} label="Analytics" id="analytics" />
+            <NavItem icon={History} label={isHospital ? "Audit Logs" : "My History"} id="logs" />
+            {!isHospital && <NavItem icon={ListChecks} label="My Records" id="queue" />}
+            {isHospital && <NavItem icon={ListChecks} label="Patient Queue" id="queue" count="7" />}
+            <NavItem icon={MapIcon} label="Network Map" id="map" />
+          </div>
 
-        {tab === "availability" ? <AvailabilityView /> : <>
-        {/* Hospital Identity Header */}
-        <div className="glass-card p-6 md:p-8 animate-fade-slide-up">
-          <div className="flex flex-col md:flex-row md:items-center gap-6">
-            <Avatar className="h-16 w-16 border-2 border-primary/30">
-              <AvatarFallback className="bg-primary/15 text-primary text-xl font-bold">VK</AvatarFallback>
-            </Avatar>
-            <div className="flex-1 space-y-1">
-              <div className="flex flex-wrap items-center gap-3">
-                <h1 className="text-xl md:text-2xl font-bold text-foreground">Apollo Hospitals, Greams Road</h1>
-                <Badge className="bg-accent/20 text-accent border-accent/30 text-xs">NABH Accredited</Badge>
+          <div className="mt-auto p-4">
+            <div className="p-4 rounded-2xl bg-white/5 border border-white/10 space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="h-8 w-8 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
+                  {isHospital ? <Building2 className="h-4 w-4" /> : <User className="h-4 w-4" />}
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-foreground truncate max-w-[120px]">
+                    {isHospital ? "Apollo Hospitals" : (currentUser?.user_metadata?.name || "Patient User")}
+                  </p>
+                  <p className="text-[9px] text-muted-foreground">
+                    {isHospital ? "Greams Road, Chennai" : "Verified Account"}
+                  </p>
+                </div>
               </div>
-              <p className="text-sm text-muted-foreground flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5" /> 21, Greams Lane, Thousand Lights, Chennai – 600006
+              <button 
+                onClick={async () => { await supabase.auth.signOut(); onNavigate("landing"); }}
+                className="w-full py-2 rounded-lg bg-white/5 text-[11px] font-bold text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all flex items-center justify-center gap-2"
+              >
+                <LogOut className="h-3 w-3" /> Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      {/* MAIN CONTENT AREA */}
+      <main className="flex-1 flex flex-col h-screen overflow-hidden">
+        {/* HEADER */}
+        <header className="h-16 border-b border-white/5 flex items-center justify-between px-8 bg-[#030a1c]/80 backdrop-blur-xl shrink-0">
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                {isHospital ? "Apollo Hospitals — Emergency Dashboard" : "EmergencyConnect — Patient Command Center"}
+              </h2>
+              <p className="text-[10px] text-muted-foreground">
+                Greams Road, Thousand Lights, Chennai – 600 006 · {formatDate(currentTime)} · {formatTime(currentTime)}
               </p>
-              <div className="flex flex-wrap gap-x-6 gap-y-1 mt-2 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1"><Stethoscope className="h-3.5 w-3.5 text-primary" /> Current Shift Lead: <strong className="text-foreground">Dr. Vijay Kishore</strong> (Cardiology)</span>
-                <span className="flex items-center gap-1"><Heart className="h-3.5 w-3.5 text-destructive" /> ER Supervisor: <strong className="text-foreground">Dr. Meera Raghavan</strong> (Trauma Care)</span>
-                <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5 text-accent" /> MCI Registered</span>
-              </div>
             </div>
-            <div className="flex flex-col items-end gap-1">
-              <Badge className="bg-accent/20 text-accent border-accent/30 gap-1 text-xs">
-                <div className="h-2 w-2 rounded-full bg-accent animate-pulse" /> Active – Level 1
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Badge className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20 text-[10px] gap-1.5 py-1">
+                <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-active-pulse" /> Level 1 Emergency Sync
               </Badge>
-              <span className="text-xs text-muted-foreground">Emergency Sync ON</span>
+              <Badge className="bg-white/5 text-muted-foreground border-white/10 text-[10px] gap-1.5 py-1">
+                <MapPin className="h-3 w-3" /> Chennai, TN
+              </Badge>
             </div>
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Live Facility Info */}
-          <div className="glass-card p-6 animate-fade-slide-up-delay-1">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Live Facility Info</h3>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ background: "hsla(190, 80%, 50%, 0.12)" }}>
-                  <User className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Dr. Vijay Kishore</p>
-                  <p className="text-xs text-muted-foreground">Senior Interventional Cardiologist</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ background: "hsla(170, 70%, 45%, 0.12)" }}>
-                  <Users className="h-5 w-5 text-accent" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Staff on Duty</p>
-                  <p className="text-xs text-muted-foreground">42 Active Personnel</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg flex items-center justify-center" style={{ background: "hsla(0, 84%, 60%, 0.12)" }}>
-                  <Phone className="h-5 w-5 text-destructive" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-foreground">Emergency Hotline</p>
-                  <p className="text-xs text-muted-foreground">+91 44 2829 3333</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Bed Management */}
-          <div className="glass-card p-6 animate-fade-slide-up-delay-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Bed Management</h3>
-            <div className="text-center mb-4">
-              <span className="text-5xl font-extrabold text-primary">{beds}</span>
-              <span className="text-2xl text-muted-foreground font-light">/{totalBeds}</span>
-              <p className="text-xs text-muted-foreground mt-1">Emergency Beds Available</p>
-            </div>
-            <Progress value={(beds / totalBeds) * 100} className="h-3 mb-4" />
-            <div className="flex gap-2 justify-center">
-              <button onClick={() => setBeds(b => Math.max(0, b - 1))}
-                className="btn-outline text-xs px-4 py-2">
-                – Admit
+            <div className="flex items-center gap-3 border-l border-white/10 pl-4">
+              <button className="h-9 w-9 rounded-full bg-white/5 flex items-center justify-center relative hover:bg-white/10 transition-all">
+                <Bell className="h-4 w-4 text-muted-foreground" />
+                <span className="absolute top-0 right-0 h-3 w-3 bg-destructive text-[8px] font-bold rounded-full flex items-center justify-center text-white border-2 border-[#030a1c]">3</span>
               </button>
-              <button onClick={() => setBeds(b => Math.min(totalBeds, b + 1))}
-                className="btn-outline text-xs px-4 py-2">
-                + Discharge
-              </button>
+              <Avatar className="h-9 w-9 border border-primary/30">
+                <AvatarFallback className="bg-primary/20 text-primary text-xs font-black">VK</AvatarFallback>
+              </Avatar>
             </div>
           </div>
+        </header>
 
-          {/* Quick Stats */}
-          <div className="glass-card p-6 animate-fade-slide-up-delay-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Today's Overview</h3>
-            <div className="space-y-4">
-              {[
-                { label: "Patients Routed", value: "34", color: "text-primary" },
-                { label: "Avg Response Time", value: "4.2 min", color: "text-accent" },
-                { label: "Critical Alerts", value: "2", color: "text-destructive" },
-                { label: "Network Uptime", value: "99.8%", color: "text-primary" },
-              ].map(s => (
-                <div key={s.label} className="flex justify-between items-center">
-                  <span className="text-sm text-muted-foreground">{s.label}</span>
-                  <span className={`text-lg font-bold ${s.color}`}>{s.value}</span>
+        {/* DASHBOARD CONTENT */}
+        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+          {tab === "dashboard" && !isHospital && (
+            <div className="animate-fade-in">
+              <HospitalSearchView />
+            </div>
+          )}
+
+          {tab === "search" && (
+            <div className="animate-fade-in">
+              <HospitalSearchView />
+            </div>
+          )}
+
+          {tab === "analytics" && (
+            <div className="h-full flex flex-col items-center justify-center space-y-4 animate-fade-in text-center p-12">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center animate-pulse">
+                <BarChart3 className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Operational Analytics</h3>
+              <p className="text-sm text-muted-foreground max-w-md">Synchronizing real-time data feeds from regional medical centers. Predictive ICU capacity and emergency routing metrics will appear here.</p>
+            </div>
+          )}
+
+          {tab === "logs" && (
+            <div className="h-full flex flex-col items-center justify-center space-y-4 animate-fade-in text-center p-12">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <History className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Security Audit Logs</h3>
+              <p className="text-sm text-muted-foreground max-w-md">Every admission request, routing change, and staff update is encrypted and logged for compliance.</p>
+            </div>
+          )}
+
+          {tab === "queue" && (
+            <div className="h-full flex flex-col items-center justify-center space-y-4 animate-fade-in text-center p-12">
+              <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center">
+                <ListChecks className="h-8 w-8 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold text-foreground">Admission Records</h3>
+              <p className="text-sm text-muted-foreground max-w-md">Access your digital admission history, clinical summaries, and upcoming routing instructions.</p>
+            </div>
+          )}
+
+          {tab === "map" && (
+            <div className="h-full w-full rounded-3xl bg-white/5 border border-white/10 relative overflow-hidden flex items-center justify-center group animate-fade-in">
+              <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20" />
+              <div className="relative z-10 text-center space-y-6">
+                <div className="h-32 w-32 rounded-full border-2 border-primary/20 flex items-center justify-center relative mx-auto">
+                  <div className="absolute inset-0 rounded-full border-t-2 border-primary animate-spin" />
+                  <MapIcon className="h-12 w-12 text-primary" />
                 </div>
-              ))}
+                <div>
+                  <h3 className="text-2xl font-black text-foreground uppercase tracking-widest">Regional Network Scan</h3>
+                  <p className="text-xs text-muted-foreground uppercase tracking-tighter mt-1">Initializing Real-time OSM Layer — 35km Radius Active</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )}
 
-        {/* Emergency Routing Feed */}
-        <div className="glass-card p-6 animate-fade-slide-up-delay-2">
-          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">Emergency Routing Feed – Chennai Network</h3>
-          <div className="overflow-auto">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-border/50">
-                  <TableHead className="text-muted-foreground">Hospital</TableHead>
-                  <TableHead className="text-muted-foreground">Location</TableHead>
-                  <TableHead className="text-muted-foreground">Doctor on Duty</TableHead>
-                  <TableHead className="text-muted-foreground">Specialist</TableHead>
-                  <TableHead className="text-muted-foreground text-center">Beds</TableHead>
-                  <TableHead className="text-muted-foreground text-center">Status</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {nearbyHospitals.map(h => (
-                  <TableRow key={h.name} className="border-border/30 hover:bg-transparent">
-                    <TableCell className="font-medium text-foreground">{h.name}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{h.location}</TableCell>
-                    <TableCell className="text-foreground text-sm">{h.doctor}</TableCell>
-                    <TableCell className="text-muted-foreground text-sm">{h.specialty}</TableCell>
-                    <TableCell className="text-center font-bold text-primary">{h.beds}</TableCell>
-                    <TableCell className="text-center">
-                      <Badge variant={h.status === "Critical" ? "destructive" : "outline"}
-                        className={
-                          h.status === "Available" ? "bg-accent/15 text-accent border-accent/30" :
-                          h.status === "Limited" ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" :
-                          ""
-                        }>
-                        {h.status}
+          {tab === "dashboard" && isHospital && (
+            <div className="space-y-8 animate-fade-in">
+              {/* LIVE ALERT TUBE */}
+              <div className="h-10 bg-white/5 border border-white/10 rounded-xl flex items-center px-4 relative overflow-hidden">
+                <div className="flex items-center gap-2 shrink-0 border-r border-white/10 pr-4 mr-4">
+                  <Badge className="bg-destructive text-white border-none text-[9px] font-black tracking-tighter px-2">LIVE</Badge>
+                </div>
+                <div className="flex items-center gap-8 overflow-hidden">
+                  <p className="text-xs text-muted-foreground animate-marquee whitespace-nowrap flex items-center gap-2">
+                    <Ambulance className="h-3 w-3 text-primary" /> Ambulance EC-04 ETA 4 min — Apollo ER Bay 2 cleared | <AlertCircle className="h-3 w-3 text-accent" /> MGM Healthcare: ICU capacity at 85% — rerouting advisory active | <CheckCircle2 className="h-3 w-3 text-emerald-500" /> Kauvery Alwarpet: 8 beds cleared
+                  </p>
+                </div>
+              </div>
+
+              {/* TOP STATS CARDS */}
+              <div className="grid md:grid-cols-3 gap-6">
+                {[
+                  { title: "EMERGENCY BEDS AVAILABLE", value: "12", total: "/ 50", sub: "Main ER + Trauma Wing", trend: "Down 4 from 6h ago", trendUp: false, color: "text-primary", icon: Bed },
+                  { title: "ACTIVE DOCTORS ON DUTY", value: "8", total: "/ 12", sub: "Across 4 departments", trend: "+2 since morning shift", trendUp: true, color: "text-emerald-400", icon: Stethoscope },
+                  { title: "AMBULANCES ROUTED TODAY", value: "23", total: "", sub: "Avg. response: 7.4 min", trend: "+6 vs. yesterday", trendUp: true, color: "text-destructive", icon: Ambulance },
+                ].map((s, idx) => (
+                  <div key={idx} className="glass-card p-6 border-white/5 bg-[#0a1124] relative group">
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <p className="text-[10px] text-muted-foreground font-black uppercase tracking-widest mb-1">{s.title}</p>
+                        <div className="flex items-baseline gap-1">
+                          <span className={`text-4xl font-black ${s.color}`}>{s.value}</span>
+                          <span className="text-xl text-muted-foreground font-light">{s.total}</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">{s.sub}</p>
+                      </div>
+                      <div className="h-10 w-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <s.icon className={`h-5 w-5 ${s.color}`} />
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 mt-4">
+                      <Badge className={`text-[9px] py-0.5 ${s.trendUp ? "bg-emerald-500/10 text-emerald-500" : "bg-destructive/10 text-destructive"} border-none`}>
+                        {s.trendUp ? <TrendingUp className="h-2.5 w-2.5 mr-1" /> : <TrendingDown className="h-2.5 w-2.5 mr-1" />}
+                        {s.trend}
                       </Badge>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
-
-        {/* Ambulance Dispatch Panel */}
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Active Ambulance Units */}
-          <div className="glass-card p-6 animate-fade-slide-up-delay-3">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
-                <Ambulance className="h-4 w-4 text-primary" /> Ambulance Dispatch
-              </h3>
-              <Badge className="bg-primary/20 text-primary border-primary/30 text-xs gap-1">
-                {ambulanceUnits.filter(a => a.status === "Available").length} Units Ready
-              </Badge>
-            </div>
-            <div className="space-y-3">
-              {ambulanceUnits.map(unit => (
-                <div key={unit.id} className="flex items-center justify-between p-3 rounded-lg border border-border/30 hover:border-border/60 transition-colors"
-                  style={{ background: "hsla(210, 50%, 95%, 0.04)" }}>
-                  <div className="flex items-center gap-3">
-                    <div className={`h-9 w-9 rounded-lg flex items-center justify-center ${
-                      unit.status === "Available" ? "bg-accent/15" : unit.status === "En Route" ? "bg-yellow-500/15" : "bg-destructive/15"
-                    }`}>
-                      <Ambulance className={`h-4 w-4 ${
-                        unit.status === "Available" ? "text-accent" : unit.status === "En Route" ? "text-yellow-400" : "text-destructive"
-                      }`} />
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-foreground">{unit.id} <span className="text-xs text-muted-foreground ml-1">({unit.type})</span></p>
-                      <p className="text-xs text-muted-foreground">{unit.crew} · {unit.location}</p>
+                    {/* MINI CHART MOCKUP */}
+                    <div className="mt-6 flex items-end gap-1 h-12">
+                      {[1,2,3,4,5,6,7,8,9,10].map(i => (
+                        <div key={idx+i} className={`flex-1 rounded-t-sm transition-all duration-500 ${s.color.replace('text-', 'bg-')}/30`} style={{ height: `${Math.random() * 100}%` }} />
+                      ))}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant={unit.status === "Available" ? "outline" : unit.status === "En Route" ? "outline" : "destructive"}
-                      className={
-                        unit.status === "Available" ? "bg-accent/15 text-accent border-accent/30 text-xs" :
-                        unit.status === "En Route" ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 text-xs" :
-                        "text-xs"
-                      }>
-                      {unit.status}
-                    </Badge>
-                    {unit.status === "Available" && (
-                      <button className="btn-outline text-xs px-3 py-1.5 flex items-center gap-1">
-                        <Navigation className="h-3 w-3" /> Dispatch
-                      </button>
-                    )}
+                ))}
+              </div>
+
+              {/* SECOND ROW: LIVE FACILITY INFO & ROUTING FEED */}
+              <div className="grid lg:grid-cols-12 gap-8">
+                {/* LIVE FACILITY INFO */}
+                <div className="lg:col-span-5 space-y-6">
+                  <div className="glass-card p-8 border-white/5 bg-[#0a1124]">
+                    <div className="flex justify-between items-start mb-8">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">🏥 Live Facility Info</span>
+                        <Badge className="bg-destructive/20 text-destructive border-none text-[8px] font-black px-1.5 py-0.5">LIVE</Badge>
+                      </div>
+                      <button className="text-[10px] text-muted-foreground hover:text-primary transition-colors border border-white/10 px-3 py-1 rounded-lg">Edit Profile</button>
+                    </div>
+
+                    <div className="flex items-center gap-6 mb-8">
+                      <div className="h-20 w-20 rounded-2xl bg-primary/20 flex items-center justify-center">
+                        <Building2 className="h-10 w-10 text-primary" />
+                      </div>
+                      <div className="space-y-1">
+                        <h3 className="text-2xl font-black text-foreground tracking-tight">Apollo Hospitals, Greams Road</h3>
+                        <p className="text-xs text-muted-foreground leading-relaxed max-w-xs">21, Greams Lane, Thousand Lights, Chennai – 600 006, Tamil Nadu</p>
+                        <div className="flex flex-wrap gap-2 mt-4">
+                          <Badge className="bg-primary/20 text-primary border-none text-[8px] font-black tracking-widest px-2">NABH ACCREDITED</Badge>
+                          <Badge className="bg-primary/20 text-primary border-none text-[8px] font-black tracking-widest px-2">MCI VERIFIED</Badge>
+                          <Badge className="bg-accent/20 text-accent border-none text-[8px] font-black tracking-widest px-2">JCI LEVEL 3</Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      {[
+                        { name: "Dr. Vijay Kishore", role: "Senior Interventional Cardiologist", active: true, fallback: "VK" },
+                        { name: "Dr. Meera Raghavan", role: "Trauma Care & Emergency Medicine", active: true, fallback: "MR" },
+                      ].map((doc, idx) => (
+                        <div key={idx} className="p-4 rounded-2xl bg-white/5 border border-white/5 flex items-center justify-between hover:bg-white/10 transition-all cursor-pointer">
+                          <div className="flex items-center gap-4">
+                            <Avatar className="h-12 w-12 border border-white/10">
+                              <AvatarFallback className="bg-[#1e293b] text-primary text-xs font-bold">{doc.fallback}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <p className="text-sm font-bold text-foreground">{doc.name}</p>
+                              <p className="text-[10px] text-muted-foreground">{doc.role}</p>
+                            </div>
+                          </div>
+                          <Badge className="bg-emerald-500/10 text-emerald-500 border-none text-[8px] font-black gap-1">
+                            <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-active-pulse" /> Active
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          </div>
 
-          {/* Route Estimations */}
-          <div className="glass-card p-6 animate-fade-slide-up-delay-3">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2 mb-4">
-              <Route className="h-4 w-4 text-accent" /> Route Estimations from Apollo
-            </h3>
-            <div className="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow className="border-border/50">
-                    <TableHead className="text-muted-foreground">Destination</TableHead>
-                    <TableHead className="text-muted-foreground text-center">Distance</TableHead>
-                    <TableHead className="text-muted-foreground text-center">ETA</TableHead>
-                    <TableHead className="text-muted-foreground text-center">Traffic</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {routeEstimations.map(r => (
-                    <TableRow key={r.to} className="border-border/30 hover:bg-transparent">
-                      <TableCell className="font-medium text-foreground text-sm">{r.to}</TableCell>
-                      <TableCell className="text-center text-muted-foreground text-sm">{r.distance}</TableCell>
-                      <TableCell className="text-center">
-                        <span className="flex items-center justify-center gap-1 text-sm font-bold text-primary">
-                          <Clock className="h-3 w-3" /> {r.eta}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-center">
-                        <Badge variant="outline" className={
-                          r.traffic === "Light" ? "bg-accent/15 text-accent border-accent/30 text-xs" :
-                          r.traffic === "Moderate" ? "bg-yellow-500/15 text-yellow-400 border-yellow-500/30 text-xs" :
-                          "bg-destructive/15 text-destructive border-destructive/30 text-xs"
-                        }>
-                          {r.traffic}
-                        </Badge>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                {/* EMERGENCY ROUTING FEED */}
+                <div className="lg:col-span-7">
+                  <div className="glass-card p-8 border-white/5 bg-[#0a1124] h-full">
+                    <div className="flex justify-between items-center mb-8">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-foreground">🗺️ Emergency Routing Feed</span>
+                        <Badge className="bg-destructive/20 text-destructive border-none text-[8px] font-black px-1.5 py-0.5">LIVE</Badge>
+                      </div>
+                      <button className="text-[10px] text-muted-foreground hover:text-primary transition-colors border border-white/10 px-3 py-1 rounded-lg flex items-center gap-2">
+                        Expand Map <ChevronRight className="h-3 w-3" />
+                      </button>
+                    </div>
+
+                    <div className="overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="border-white/5 hover:bg-transparent">
+                            <TableHead className="text-[10px] text-muted-foreground font-black uppercase tracking-widest h-10">Hospital</TableHead>
+                            <TableHead className="text-[10px] text-muted-foreground font-black uppercase tracking-widest h-10">Doctor on Duty</TableHead>
+                            <TableHead className="text-[10px] text-muted-foreground font-black uppercase tracking-widest h-10 text-center">Beds Avail.</TableHead>
+                            <TableHead className="text-[10px] text-muted-foreground font-black uppercase tracking-widest h-10 text-center">ETA</TableHead>
+                            <TableHead className="text-[10px] text-muted-foreground font-black uppercase tracking-widest h-10 text-right">Action</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {[
+                            { name: "MGM Healthcare", loc: "Nelson Manickam Road", doc: "Dr. S. Ananth", spec: "Critical Care & ECMO", beds: "7/25", eta: "8 min", color: "bg-destructive" },
+                            { name: "SIMS Hospital", loc: "Vadapalani", doc: "Dr. Raju Sivasamy", spec: "Senior Orthopaedic Surgeon", beds: "18/29", eta: "12 min", color: "bg-primary" },
+                            { name: "MIOT International", loc: "Manapakkam", doc: "Dr. Prithvi Mohandas", spec: "Hip & Joint Replacement", beds: "22/38", eta: "17 min", color: "bg-accent" },
+                            { name: "Kauvery Hospital", loc: "Alwarpet", doc: "Dr. Aravindan Selvaraj", spec: "Multi-Organ Transplant", beds: "8/15", eta: "9 min", color: "bg-emerald-500" },
+                            { name: "Fortis Malar", loc: "Adyar", doc: "Dr. Nandakumar Sundaram", spec: "Traumatology & Spine", beds: "10/25", eta: "14 min", color: "bg-orange-500" },
+                          ].map((h, i) => (
+                            <TableRow key={i} className="border-white/5 hover:bg-white/5 transition-colors">
+                              <TableCell className="py-4">
+                                <div className="flex items-center gap-3">
+                                  <div className={`h-8 w-8 rounded-lg bg-white/5 flex items-center justify-center font-black text-[10px] text-muted-foreground`}>
+                                    {h.name.split(' ')[0][0]}
+                                  </div>
+                                  <div>
+                                    <p className="text-xs font-bold text-foreground">{h.name}</p>
+                                    <p className="text-[9px] text-muted-foreground">{h.loc}</p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4">
+                                <p className="text-xs font-bold text-foreground">{h.doc}</p>
+                                <p className="text-[9px] text-muted-foreground">{h.spec}</p>
+                              </TableCell>
+                              <TableCell className="py-4 text-center">
+                                <div className="flex flex-col items-center gap-1.5">
+                                  <span className="text-xs font-bold text-foreground">{h.beds}</span>
+                                  <div className="w-16 h-1 bg-white/5 rounded-full overflow-hidden">
+                                    <div className={`h-full ${h.color}`} style={{ width: `${(parseInt(h.beds.split('/')[0])/parseInt(h.beds.split('/')[1]))*100}%` }} />
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell className="py-4 text-center">
+                                <span className="text-xs font-black text-accent">{h.eta}</span>
+                              </TableCell>
+                              <TableCell className="py-4 text-right">
+                                <button className="text-[9px] font-black uppercase tracking-widest text-primary hover:text-primary/80 transition-colors">Route →</button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {tab === "availability" && <AvailabilityView currentUser={currentUser} />}
+          {tab === "search" && <HospitalSearchView />}
+          {tab === "services" && <ServicesView />}
+          {tab === "users" && <UserDirectoryView />}
         </div>
-
-        {/* Critical Alerts */}
-        <CriticalAlerts />
-
-        {/* Live Map View */}
-        <LiveMapView />
-        </>}
-      </div>
+      </main>
     </div>
   );
 };

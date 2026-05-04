@@ -11,10 +11,23 @@ const COMMON = [
   "High Fever", "Severe Bleeding", "Unconscious", "Pregnancy Emergency",
 ];
 
+import { useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
 const DiseaseIntakeView = ({ onNavigate }: Props) => {
   const [disease, setDisease] = useState("");
   const [severity, setSeverity] = useState<"mild" | "moderate" | "critical">("moderate");
   const [notes, setNotes] = useState("");
+
+  useEffect(() => {
+    const checkRole = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata?.user_type === "hospital") {
+        onNavigate("dashboard");
+      }
+    };
+    checkRole();
+  }, [onNavigate]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,6 +36,7 @@ const DiseaseIntakeView = ({ onNavigate }: Props) => {
       return;
     }
     localStorage.setItem("ec_intake", JSON.stringify({ disease, severity, notes, at: Date.now() }));
+    localStorage.setItem("ec_redirect_search", "true");
     toast.success("Condition recorded — routing you to the dashboard");
     onNavigate("dashboard");
   };
