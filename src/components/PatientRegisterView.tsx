@@ -2,12 +2,9 @@ import { Activity, AlertCircle, ArrowLeft } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { sendOtp } from "@/lib/otpClient";
 
 interface PatientRegisterViewProps {
-  onNavigate: (view: "landing" | "login" | "chooseRegister" | "patientVerify") => void;
-  onSetEmail: (email: string) => void;
-  onSetVerificationCode: (code: string) => void;
+  onNavigate: (view: "landing" | "login" | "chooseRegister" | "dashboard") => void;
 }
 
 interface FormErrors {
@@ -31,7 +28,7 @@ const validateForm = (form: Record<string, string>): FormErrors => {
   return errors;
 };
 
-const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: PatientRegisterViewProps) => {
+const PatientRegisterView = ({ onNavigate }: PatientRegisterViewProps) => {
   const [form, setForm] = useState<Record<string, string>>({
     name: "", email: "", phone: "", password: "",
   });
@@ -64,7 +61,6 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
 
     setLoading(true);
     try {
-      // Sign up the user (auto-confirmed)
       const { error: signUpError } = await supabase.auth.signUp({
         email: form.email,
         password: form.password,
@@ -83,24 +79,8 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
         return;
       }
 
-      // Sign out so we can send OTP code to Gmail
-      await supabase.auth.signOut();
-
-      // Send 6-digit OTP code via local Node.js + Gmail SMTP server
-      try {
-        await sendOtp(form.email);
-      } catch (err: any) {
-        toast.error(err.message || "Failed to send OTP. Is the OTP server running?");
-        setLoading(false);
-        return;
-      }
-
-      onSetEmail(form.email);
-      onSetVerificationCode("");
-      toast.success(`6-digit code sent to ${form.email}`, {
-        description: "Check your Gmail inbox (and spam folder)",
-      });
-      onNavigate("patientVerify");
+      toast.success("Registration successful");
+      onNavigate("dashboard");
     } catch (err: any) {
       toast.error(err.message || "Registration failed");
     } finally {
@@ -136,16 +116,16 @@ const PatientRegisterView = ({ onNavigate, onSetEmail, onSetVerificationCode }: 
           <span className="text-lg font-bold text-foreground">EmergencyConnect</span>
         </div>
         <h2 className="text-2xl font-bold text-foreground mb-2">Patient Registration</h2>
-        <p className="text-sm text-muted-foreground mb-8">Quick signup — we'll email you a code</p>
+        <p className="text-sm text-muted-foreground mb-8">Quick signup with email and password</p>
 
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           {renderInput("name", "Full Name", "Rajesh Kumar")}
-          {renderInput("email", "Gmail Address", "rajesh@gmail.com", "email", "Code will be sent here")}
+          {renderInput("email", "Email Address", "rajesh@gmail.com", "email", "Use this email to sign in")}
           {renderInput("phone", "Mobile Number", "9876543210", "tel", "10-digit Indian mobile number")}
           {renderInput("password", "Password", "••••••••", "password", "Min 8 chars, 1 uppercase, 1 number")}
 
           <button type="submit" className="btn-primary mt-2" disabled={loading}>
-            {loading ? "Sending code..." : "Register & Get Code"}
+            {loading ? "Registering..." : "Register Patient"}
           </button>
         </form>
 
