@@ -140,7 +140,7 @@ const RegisterView = ({ onNavigate }: RegisterViewProps) => {
         },
       });
 
-      if (error && !error.message.includes("already registered")) {
+      if (error) {
         toast.error(error.message);
         setLoading(false);
         return;
