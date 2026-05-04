@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
 interface LoginViewProps {
-  onNavigate: (view: "landing" | "chooseRegister" | "dashboard") => void;
+  onNavigate: (view: "landing" | "chooseRegister" | "dashboard" | "intake") => void;
 }
 
 const LoginView = ({ onNavigate }: LoginViewProps) => {
@@ -30,7 +30,7 @@ const LoginView = ({ onNavigate }: LoginViewProps) => {
       if (error) throw error;
 
       toast.success("Login successful");
-      onNavigate("dashboard");
+      onNavigate("intake");
     } catch (err: any) {
       toast.error(err.message || "Login failed");
     } finally {
